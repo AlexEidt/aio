@@ -63,6 +63,10 @@ func NewAudioWriter(filename string, options *Options) (*AudioWriter, error) {
 		return nil, err
 	}
 
+	if options == nil {
+		options = &Options{}
+	}
+
 	writer := &AudioWriter{
 		filename: filename,
 		bitrate:  options.Bitrate,

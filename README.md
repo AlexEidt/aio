@@ -119,7 +119,7 @@ aio.Play(filename string) error
 
 ## Examples
 
-Copy `input.wav` to `output.mp3`
+Copy `input.wav` to `output.mp3`.
 
 ```go
 audio, _ := aio.NewAudio("input.wav", "s16le")

@@ -61,6 +61,7 @@ Channels() int
 Bitrate() int
 Format() string
 Codec() string
+Video() string
 
 Write(frame []byte) error
 Close()

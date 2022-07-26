@@ -18,6 +18,8 @@ As an example, if there is stereo sound (two channels) encoded in the `s16le` (s
 44100 * 2 (channels) * 2 (bytes per sample) = 176400 bytes
 ```
 
+Continuing on with this example, since this is stereo audio with 2 channels, one frame of audio is represented by 2 consecutive integers, one for each channel. Each integer is 16 bits, which means one frame of audio would be represented by 4 consecutive bytes.
+
 ## `Audio`
 
 `Audio` is used to read audio from files. It can also be used to gather audio metadata from a file. By default, the audio buffer has a length of

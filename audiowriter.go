@@ -70,7 +70,7 @@ func NewAudioWriter(filename string, options *Options) (*AudioWriter, error) {
 		codec:    options.Codec,
 	}
 
-	if options.SampleRate > 0 {
+	if options.SampleRate == 0 {
 		writer.samplerate = 44100
 	} else {
 		writer.samplerate = options.SampleRate

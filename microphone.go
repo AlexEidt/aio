@@ -137,7 +137,7 @@ func NewMicrophone(stream int, options *Options) (*Microphone, error) {
 	case "linux":
 		device = fmt.Sprintf("%d", stream)
 	case "darwin":
-		device = fmt.Sprintf(":%d", stream)
+		device = fmt.Sprintf(`":%d"`, stream)
 	case "windows":
 		// If OS is windows, we need to parse the listed devices to find which corresponds to the
 		// given "stream" index.

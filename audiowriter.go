@@ -56,7 +56,7 @@ func (writer *AudioWriter) Codec() string {
 	return writer.codec
 }
 
-// Creates a new VideoWriter struct with default values from the Options struct.
+// Creates a new AudioWriter struct with default values from the Options struct.
 func NewAudioWriter(filename string, options *Options) (*AudioWriter, error) {
 	// Check if ffmpeg is installed on the users machine.
 	if err := checkExists("ffmpeg"); err != nil {
@@ -115,12 +115,12 @@ func NewAudioWriter(filename string, options *Options) (*AudioWriter, error) {
 	return writer, nil
 }
 
-// Once the user calls Write() for the first time on a VideoWriter struct,
-// the ffmpeg command which is used to write to the video file is started.
-func initVideoWriter(writer *AudioWriter) error {
+// Once the user calls Write() for the first time on a AudioWriter struct,
+// the ffmpeg command which is used to write to the audio file is started.
+func initAudioWriter(writer *AudioWriter) error {
 	// If user exits with Ctrl+C, stop ffmpeg process.
 	writer.cleanup()
-	// ffmpeg command to write to video file. Takes in bytes from Stdin and encodes them.
+	// ffmpeg command to write to audio file. Takes in bytes from Stdin and encodes them.
 	command := []string{
 		"-y", // overwrite output file if it exists.
 		"-loglevel", "quiet",
@@ -174,7 +174,7 @@ func initVideoWriter(writer *AudioWriter) error {
 func (writer *AudioWriter) Write(buffer []byte) error {
 	// If cmd is nil, audio writing has not been set up.
 	if writer.cmd == nil {
-		if err := initVideoWriter(writer); err != nil {
+		if err := initAudioWriter(writer); err != nil {
 			return err
 		}
 	}

@@ -66,8 +66,8 @@ func (audio *Audio) SetBuffer(buffer []byte) {
 	audio.buffer = buffer
 }
 
-// Creates a new Video struct.
-// Uses ffprobe to get video information and fills in the Video struct with this data.
+// Creates a new Audio struct.
+// Uses ffprobe to get audio information and fills in the Audio struct with this data.
 func NewAudio(filename, format string) (*Audio, error) {
 	if !exists(filename) {
 		return nil, fmt.Errorf("video file %s does not exist", filename)
@@ -108,8 +108,8 @@ func NewAudio(filename, format string) (*Audio, error) {
 	return audio, nil
 }
 
-// Once the user calls Read() for the first time on a Video struct,
-// the ffmpeg command which is used to read the video is started.
+// Once the user calls Read() for the first time on a Audio struct,
+// the ffmpeg command which is used to read the audio is started.
 func initAudio(audio *Audio) error {
 	// If user exits with Ctrl+C, stop ffmpeg process.
 	audio.cleanup()
@@ -140,7 +140,7 @@ func initAudio(audio *Audio) error {
 	return nil
 }
 
-// Reads the next frame from the video and stores in the framebuffer.
+// Reads the next frame from of audio and stores it in the buffer.
 // If the last frame has been read, returns false, otherwise true.
 func (audio *Audio) Read() bool {
 	// If cmd is nil, video reading has not been initialized.

@@ -41,7 +41,7 @@ func checkExists(program string) error {
 // Runs ffprobe on the given file and returns a map of the metadata.
 func ffprobe(filename, stype string) (map[string]string, error) {
 	// "stype" is stream stype. "v" for video, "a" for audio.
-	// Extract video information with ffprobe.
+	// Extract media metadata information with ffprobe.
 	cmd := exec.Command(
 		"ffprobe",
 		"-show_streams",
@@ -77,7 +77,7 @@ func ffprobe(filename, stype string) (map[string]string, error) {
 	return parseFFprobe(buffer[:total]), nil
 }
 
-// Parse ffprobe output to fill in video data.
+// Parse ffprobe output to fill in audio data.
 func parseFFprobe(input []byte) map[string]string {
 	data := make(map[string]string)
 	for _, line := range strings.Split(string(input), "|") {

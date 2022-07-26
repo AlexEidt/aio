@@ -12,7 +12,11 @@ go get github.com/AlexEidt/aio
 
 `aio` uses `byte` buffers to transport audio data. Audio data can take on many forms, including floating point, unsigned integer and signed integer. All these types are larger than a `byte` and therefore must be split. Learn more about [available audio types](https://trac.ffmpeg.org/wiki/audio%20types) from the FFmpeg Wiki. `alaw` and `mulaw` are currently not supported.
 
-As an example, if there is stereo sound (two channels) encoded in the `s16le` (signed 16 bit integers, little endian) format with a sampling rate of `44100 Hz`, one second of audio would be `44100 * 2 (channels) * 2 (bytes per sample) = 176400` bytes.
+As an example, if there is stereo sound (two channels) encoded in the `s16le` (signed 16 bit integers, little endian) format with a sampling rate of `44100 Hz`, one second of audio would be
+
+```
+44100 * 2 (channels) * 2 (bytes per sample) = 176400 bytes
+```
 
 ## `Audio`
 

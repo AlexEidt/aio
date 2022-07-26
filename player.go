@@ -15,6 +15,7 @@ func Play(filename string) error {
 		"ffplay",
 		"-i", filename,
 		"-nodisp",
+		"-autoexit",
 		"-loglevel", "quiet",
 	)
 	if err := cmd.Start(); err != nil {

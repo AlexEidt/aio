@@ -77,7 +77,7 @@ func NewAudioWriter(filename string, options *Options) (*AudioWriter, error) {
 	}
 
 	if options.Channels == 0 {
-		writer.channels = 1
+		writer.channels = 2
 	} else {
 		writer.channels = options.Channels
 	}

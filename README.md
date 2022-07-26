@@ -1,4 +1,4 @@
-# Vidio
+# `aio`
 
 A simple Audio I/O library written in Go. This library relies on [FFmpeg](https://www.ffmpeg.org/), [FFProbe](https://ffmpeg.org/ffprobe.html) and [FFPlay](https://ffmpeg.org/ffplay.html) which must be downloaded before usage and added to the system path.
 

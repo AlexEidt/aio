@@ -52,7 +52,7 @@ func (mic *Microphone) SetBuffer(buffer []byte) {
 	mic.buffer = buffer
 }
 
-// Returns the webcam device name.
+// Returns the microphone device name.
 // On windows, ffmpeg output from the -list_devices command is parsed to find the device name.
 func getDevicesWindows() ([]string, error) {
 	// Run command to get list of devices.
@@ -121,12 +121,12 @@ func getMicrophoneData(device string, mic *Microphone) error {
 	// Wait for the command to finish.
 	cmd.Wait()
 
-	parseWebcamData(buffer[:total], mic)
+	parseMicrophoneData(buffer[:total], mic)
 	return nil
 }
 
 // Creates a new microphone struct that can read from the device with the given stream index.
-func NewMicrophone(stream int, format string) (*Microphone, error) {
+func NewMicrophone(stream int, options *Options) (*Microphone, error) {
 	// Check if ffmpeg is installed on the users machine.
 	if err := checkExists("ffmpeg"); err != nil {
 		return nil, err
@@ -153,28 +153,42 @@ func NewMicrophone(stream int, format string) (*Microphone, error) {
 		return nil, fmt.Errorf("unsupported OS: %s", runtime.GOOS)
 	}
 
+	mic := Microphone{name: device}
+
+	if err := getMicrophoneData(device, &mic); err != nil {
+		return nil, err
+	}
+
+	if options == nil {
+		options = &Options{}
+	}
+
+	mic.format = "s16le" // Default format.
+	if options.Format != "" {
+		mic.format = options.Format
+	}
+
+	if options.SampleRate != 0 {
+		mic.samplerate = options.SampleRate
+	}
+
+	if options.Channels != 0 {
+		mic.channels = options.Channels
+	}
+
 	match := regexp.MustCompile(`^[fsu]\d{1,2}[lb]e$`)
-	if format == "mulaw" || format == "alaw" || len(match.FindString(format)) == 0 {
-		return nil, fmt.Errorf("audio format %s is not supported", format)
+	if mic.format == "mulaw" || mic.format == "alaw" || len(match.FindString(mic.format)) == 0 {
+		return nil, fmt.Errorf("audio format %s is not supported", mic.format)
 	}
 
 	match = regexp.MustCompile(`\d{1,2}`)
-	bps := int(parse(match.FindString(format))) // Bits per sample.
+	mic.bps = int(parse(match.FindString(mic.format))) // Bits per sample.
 
-	camera := Microphone{
-		name:   device,
-		format: format,
-		bps:    bps,
-	}
-
-	if err := getMicrophoneData(device, &camera); err != nil {
-		return nil, err
-	}
-	return &camera, nil
+	return &mic, nil
 }
 
-// Once the user calls Read() for the first time on a Camera struct,
-// the ffmpeg command which is used to read the camera device is started.
+// Once the user calls Read() for the first time on a Microphone struct,
+// the ffmpeg command which is used to read the microphone device is started.
 func initMicrophone(mic *Microphone) error {
 	// If user exits with Ctrl+C, stop ffmpeg process.
 	mic.cleanup()
@@ -184,7 +198,7 @@ func initMicrophone(mic *Microphone) error {
 		return err
 	}
 
-	// Use ffmpeg to pipe webcam to stdout.
+	// Use ffmpeg to pipe microphone to stdout.
 	cmd := exec.Command(
 		"ffmpeg",
 		"-hide_banner",

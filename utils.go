@@ -190,7 +190,7 @@ func contains(list []string, item string) bool {
 }
 
 // Parses the microphone metadata from ffmpeg output.
-func parseWebcamData(buffer []byte, mic *Microphone) {
+func parseMicrophoneData(buffer []byte, mic *Microphone) {
 	bufferstr := string(buffer)
 	// Sample String: "Stream #0:0: Audio: pcm_s16le, 44100 Hz, stereo, s16, 1411 kb/s".
 	index := strings.Index(bufferstr, "Stream #")

@@ -46,31 +46,6 @@ Read() bool
 Close()
 ```
 
-## `Microphone`
-
-`Microphone` is similar to the `Audio` struct, the only difference being that it reads audio from the microphone. The `stream` parameter is used to specify the microphone stream index, which will differ depending on the platform. For Windows (`dshow`) and MacOS (`avfoundation`), find the stream index by entering the following command
-
-```
-ffmpeg -f [dshow | avfoundation] -list_devices true -i dummy
-```
-
-and selecting the desired stream. For linux, see [this page](https://trac.ffmpeg.org/wiki/Capture/PulseAudio) on the FFmpeg Wiki.
-
-```go
-aio.NewMicrophone(stream int, format int) (*Microphone, error)
-
-Name() string
-SampleRate() int
-Channels() int
-Format() string
-BitsPerSample() int
-Buffer() []byte
-SetBuffer(buffer []byte)
-
-Read() bool
-Close()
-```
-
 ## `AudioWriter`
 
 `AudioWriter` is used to write audio to files from a `byte` buffer. It comes with an `Options` struct that can be used to specify certain metadata of the output audio file.
@@ -98,6 +73,33 @@ type Options struct {
 	Codec      string // Audio Codec.
 	Video      string // Video file to use.
 }
+```
+
+## `Microphone`
+
+`Microphone` is similar to the `Audio` struct, the only difference being that it reads audio from the microphone. The `stream` parameter is used to specify the microphone stream index, which will differ depending on the platform. For Windows (`dshow`) and MacOS (`avfoundation`), find the stream index by entering the following command
+
+```
+ffmpeg -f [dshow | avfoundation] -list_devices true -i dummy
+```
+
+and selecting the desired stream. For linux, see [this page](https://trac.ffmpeg.org/wiki/Capture/PulseAudio) on the FFmpeg Wiki.
+
+Additionally, an `options` parameter may be passed to specify the format, sampling rate and audio channels the microphone should record at. Any other options are ignored.
+
+```go
+aio.NewMicrophone(stream int, options *aio.Options) (*Microphone, error)
+
+Name() string
+SampleRate() int
+Channels() int
+Format() string
+BitsPerSample() int
+Buffer() []byte
+SetBuffer(buffer []byte)
+
+Read() bool
+Close()
 ```
 
 ## `Player`
@@ -140,19 +142,20 @@ for audio.Read() {
 }
 ```
 
-Capture 10 seconds of audio from the microphone.
+Capture 10 seconds of audio from the microphone. Audio is recorded at 44100 Hz stereo and is in signed 16 bit format.
 
 ```go
-mic, _ := aio.NewMicrophone(0, "s16le")
+micOptions := aio.Options{Format: "s16le", Channels: 2, SampleRate: 44100}
+mic, _ := aio.NewMicrophone(0, &micOptions)
 defer mic.Close()
 
-options := aio.Options{
+writerOptions := aio.Options{
 	SampleRate: mic.SampleRate(),
 	Channels:   mic.Channels(),
 	Format:     mic.Format(),
 }
 
-writer, _ := aio.NewAudioWriter("output.wav", &options)
+writer, _ := aio.NewAudioWriter("output.wav", &writerOptions)
 defer writer.Close()
 
 seconds := 0
@@ -200,10 +203,10 @@ for audio.Read() {
 }
 ```
 
-Play Microphone audio.
+Play Microphone audio. Use default microphone settings for recording.
 
 ```go
-mic, _ := aio.NewMicrophone(0, "s16le")
+mic, _ := aio.NewMicrophone(0, nil)
 defer mic.Close()
 
 player, _ := aio.NewPlayer(

@@ -74,21 +74,18 @@ func NewAudioWriter(filename string, options *Options) (*AudioWriter, error) {
 		codec:    options.Codec,
 	}
 
-	if options.SampleRate == 0 {
-		writer.samplerate = 44100
-	} else {
+	writer.samplerate = 44100 // 44100 Hz sampling rate by default.
+	if options.SampleRate != 0 {
 		writer.samplerate = options.SampleRate
 	}
 
-	if options.Channels == 0 {
-		writer.channels = 2
-	} else {
+	writer.channels = 2 // Stereo by default.
+	if options.Channels != 0 {
 		writer.channels = options.Channels
 	}
 
-	if options.Format == "" {
-		writer.format = "s16le"
-	} else {
+	writer.format = "s16le"
+	if options.Format != "" {
 		match := regexp.MustCompile(`^[fsu]\d{1,2}[lb]e$`)
 		if options.Format == "mulaw" || options.Format == "alaw" || len(match.FindString(options.Format)) == 0 {
 			return nil, fmt.Errorf("audio format %s is not supported", options.Format)

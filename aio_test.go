@@ -107,3 +107,51 @@ func TestAudioCopying(t *testing.T) {
 
 	fmt.Println("Audio Copying test passed.")
 }
+
+// Linux and MacOS allow the user to directly choose a microphone stream by index.
+// Windows requires the user to give the device name.
+func TestDeviceParsingWindows(t *testing.T) {
+	// Sample string taken from FFmpeg wiki:
+	data := parseDevices(
+		[]byte(`ffmpeg version N-45279-g6b86dd5... --enable-runtime-cpudetect
+  libavutil      51. 74.100 / 51. 74.100
+  libavcodec     54. 65.100 / 54. 65.100
+  libavformat    54. 31.100 / 54. 31.100
+  libavdevice    54.  3.100 / 54.  3.100
+  libavfilter     3. 19.102 /  3. 19.102
+  libswscale      2.  1.101 /  2.  1.101
+  libswresample   0. 16.100 /  0. 16.100
+[dshow @ 03ACF580] DirectShow video devices
+[dshow @ 03ACF580]  "Integrated Camera"
+[dshow @ 03ACF580]  "screen-capture-recorder"
+[dshow @ 03ACF580] DirectShow audio devices
+[dshow @ 03ACF580]  "Internal Microphone (Conexant 2"
+[dshow @ 03ACF580]  "virtual-audio-capturer"
+dummy: Immediate exit requested`,
+		),
+	)
+
+	assertEquals(data[0], "Internal Microphone (Conexant 2")
+	assertEquals(data[1], "virtual-audio-capturer")
+
+	fmt.Println("Device Parsing for Windows Test Passed")
+}
+
+func TestWebcamParsing(t *testing.T) {
+	mic := &Microphone{}
+	err := getMicrophoneData(
+		`Input #0, dshow, from 'audio=Microphone Array (Realtek High Definition Audio(SST))':
+		Duration: N/A, start: 653436.725000, bitrate: 1411 kb/s
+		Stream #0:0: Audio: pcm_s16le, 44100 Hz, stereo, s16, 1411 kb/s`,
+		mic,
+	)
+
+	if err != nil {
+		panic(err)
+	}
+
+	assertEquals(mic.SampleRate(), int(44100))
+	assertEquals(mic.Channels(), int(2))
+
+	fmt.Println("Webcam Parsing Test Passed")
+}

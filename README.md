@@ -107,7 +107,7 @@ type Options struct {
 ```go
 aio.NewPlayer(channels, samplerate int, format string) (*Player, error)
 
-Play() error
+Play(buffer []byte) error
 Close()
 ```
 

@@ -16,7 +16,13 @@ As an example, if there is stereo sound (two channels) encoded in the `s16le` (s
 
 ## `Audio`
 
-`Audio` is used to read audio from files. It can also be used to gather audio metadata from a file. By default, the audio buffer has a length of `sample rate * channels * bits per sample`, which corresponds to 1 second of audio data.
+`Audio` is used to read audio from files. It can also be used to gather audio metadata from a file. By default, the audio buffer has a length of
+
+```
+sample rate * channels * bits per sample
+```
+
+which corresponds to 1 second of audio data.
 
 ```go
 aio.NewAudio(filename, format string) (*Audio, error)
@@ -38,7 +44,13 @@ Close()
 
 ## `Microphone`
 
-`Microphone` is similar to the `Audio` struct, the only difference being that it reads audio from the microphone. The `stream` parameter is used to specify the microphone stream index, which will differ depending on the platform. For Windows (`dshow`) and MacOS (`avfoundation`), find the stream index by entering the following command `ffmpeg -f [dshow | avfoundation] -list_devices true -i dummy` and selecting the desired stream. For linux, see [this page](https://trac.ffmpeg.org/wiki/Capture/PulseAudio) on the FFmpeg Wiki.
+`Microphone` is similar to the `Audio` struct, the only difference being that it reads audio from the microphone. The `stream` parameter is used to specify the microphone stream index, which will differ depending on the platform. For Windows (`dshow`) and MacOS (`avfoundation`), find the stream index by entering the following command
+
+```
+ffmpeg -f [dshow | avfoundation] -list_devices true -i dummy
+```
+
+and selecting the desired stream. For linux, see [this page](https://trac.ffmpeg.org/wiki/Capture/PulseAudio) on the FFmpeg Wiki.
 
 ```go
 aio.NewMicrophone(stream int, format int) (*Microphone, error)

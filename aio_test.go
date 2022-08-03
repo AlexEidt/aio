@@ -12,6 +12,23 @@ func assertEquals(actual, expected interface{}) {
 	}
 }
 
+func TestSetBuffer(t *testing.T) {
+	audio, err := NewAudio("test/beach.mp3", "s16le")
+	if err != nil {
+		panic(err)
+	}
+
+	defer audio.Close()
+
+	audio.SetBuffer(make([]byte, 10))
+
+	audio.Read()
+
+	assertEquals(len(audio.Buffer()), 10)
+
+	fmt.Println("Set Buffer Test Passed")
+}
+
 func TestAudioIO(t *testing.T) {
 	audio, err := NewAudio("test/beach.mp3", "s16le")
 	if err != nil {

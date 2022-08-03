@@ -223,7 +223,10 @@ func initMicrophone(mic *Microphone) error {
 		return err
 	}
 
-	mic.buffer = make([]byte, mic.samplerate*mic.channels)
+	if mic.buffer == nil {
+		mic.buffer = make([]byte, mic.samplerate*mic.channels*mic.bps/8)
+	}
+
 	return nil
 }
 

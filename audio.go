@@ -60,8 +60,6 @@ func (audio *Audio) Buffer() []byte {
 	return audio.buffer
 }
 
-// Sets the framebuffer to the given byte array. Note that "buffer" must be large enough
-// to store one frame of audio data.
 func (audio *Audio) SetBuffer(buffer []byte) {
 	audio.buffer = buffer
 }
@@ -135,7 +133,9 @@ func initAudio(audio *Audio) error {
 		return err
 	}
 
-	audio.buffer = make([]byte, audio.samplerate*audio.channels*audio.bps/8)
+	if audio.buffer == nil {
+		audio.buffer = make([]byte, audio.samplerate*audio.channels*audio.bps/8)
+	}
 
 	return nil
 }

@@ -11,6 +11,11 @@ import (
 )
 
 func Play(filename string) error {
+	// Check if ffprobe is installed on the users machine.
+	if err := checkExists("ffplay"); err != nil {
+		return nil
+	}
+
 	cmd := exec.Command(
 		"ffplay",
 		"-i", filename,
@@ -44,7 +49,7 @@ type Player struct {
 }
 
 func NewPlayer(channels, samplerate int, format string) (*Player, error) {
-	// Check if ffmpeg and ffprobe are installed on the users machine.
+	// Check if ffprobe is installed on the users machine.
 	if err := checkExists("ffplay"); err != nil {
 		return nil, err
 	}

@@ -11,7 +11,7 @@ import (
 )
 
 func Play(filename string) error {
-	// Check if ffprobe is installed on the users machine.
+	// Check if ffplay is installed on the users machine.
 	if err := checkExists("ffplay"); err != nil {
 		return nil
 	}
@@ -49,7 +49,7 @@ type Player struct {
 }
 
 func NewPlayer(channels, samplerate int, format string) (*Player, error) {
-	// Check if ffprobe is installed on the users machine.
+	// Check if ffplay is installed on the users machine.
 	if err := checkExists("ffplay"); err != nil {
 		return nil, err
 	}

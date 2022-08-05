@@ -177,7 +177,7 @@ audio, _ := aio.NewAudio("input.mp4", "s16le")
 player, _ := aio.NewPlayer(
 	audio.Channels(),
 	audio.SampleRate(),
-	audio.Format()
+	audio.Format(),
 )
 defer player.Close()
 

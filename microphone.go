@@ -53,37 +53,64 @@ func (mic *Microphone) SetBuffer(buffer []byte) {
 	mic.buffer = buffer
 }
 
-// Returns the microphone device name.
-// On windows, ffmpeg output from the -list_devices command is parsed to find the device name.
-func getDevicesWindows() ([]string, error) {
-	// Run command to get list of devices.
-	cmd := exec.Command(
-		"ffmpeg",
-		"-hide_banner",
-		"-list_devices", "true",
-		"-f", "dshow",
-		"-i", "dummy",
-	)
-	pipe, err := cmd.StderrPipe()
-	if err != nil {
+// Creates a new microphone struct that can read from the device with the given stream index.
+func NewMicrophone(stream int, options *Options) (*Microphone, error) {
+	// Check if ffmpeg is installed on the users machine.
+	if err := checkExists("ffmpeg"); err != nil {
 		return nil, err
 	}
-	if err := cmd.Start(); err != nil {
-		return nil, err
-	}
-	// Read list devices from Stdout.
-	buffer := make([]byte, 2<<10)
-	total := 0
-	for {
-		n, err := pipe.Read(buffer[total:])
-		total += n
-		if err == io.EOF {
-			break
+
+	var device string
+	switch runtime.GOOS {
+	case "linux":
+		device = fmt.Sprintf("%d", stream)
+	case "darwin":
+		device = fmt.Sprintf(`":%d"`, stream)
+	case "windows":
+		// If OS is windows, we need to parse the listed devices to find which corresponds to the
+		// given "stream" index.
+		devices, err := getDevicesWindows()
+		if err != nil {
+			return nil, err
 		}
+		if stream >= len(devices) {
+			return nil, fmt.Errorf("could not find device with index: %d", stream)
+		}
+		device = "audio=" + devices[stream]
+	default:
+		return nil, fmt.Errorf("unsupported OS: %s", runtime.GOOS)
 	}
-	cmd.Wait()
-	devices := parseDevices(buffer)
-	return devices, nil
+
+	mic := Microphone{name: device}
+
+	if err := mic.getMicrophoneData(device); err != nil {
+		return nil, err
+	}
+
+	if options == nil {
+		options = &Options{}
+	}
+
+	mic.format = "s16le" // Default format.
+	if options.Format != "" {
+		mic.format = options.Format
+	}
+
+	if options.SampleRate != 0 {
+		mic.samplerate = options.SampleRate
+	}
+
+	if options.Channels != 0 {
+		mic.channels = options.Channels
+	}
+
+	if err := checkFormat(mic.format); err != nil {
+		return nil, err
+	}
+
+	mic.bps = int(parse(regexp.MustCompile(`\d{1,2}`).FindString(mic.format))) // Bits per sample.
+
+	return &mic, nil
 }
 
 // Parses the microphone metadata from ffmpeg output.
@@ -148,66 +175,6 @@ func (mic *Microphone) getMicrophoneData(device string) error {
 
 	mic.parseMicrophoneData(buffer[:total])
 	return nil
-}
-
-// Creates a new microphone struct that can read from the device with the given stream index.
-func NewMicrophone(stream int, options *Options) (*Microphone, error) {
-	// Check if ffmpeg is installed on the users machine.
-	if err := checkExists("ffmpeg"); err != nil {
-		return nil, err
-	}
-
-	var device string
-	switch runtime.GOOS {
-	case "linux":
-		device = fmt.Sprintf("%d", stream)
-	case "darwin":
-		device = fmt.Sprintf(`":%d"`, stream)
-	case "windows":
-		// If OS is windows, we need to parse the listed devices to find which corresponds to the
-		// given "stream" index.
-		devices, err := getDevicesWindows()
-		if err != nil {
-			return nil, err
-		}
-		if stream >= len(devices) {
-			return nil, fmt.Errorf("could not find device with index: %d", stream)
-		}
-		device = "audio=" + devices[stream]
-	default:
-		return nil, fmt.Errorf("unsupported OS: %s", runtime.GOOS)
-	}
-
-	mic := Microphone{name: device}
-
-	if err := mic.getMicrophoneData(device); err != nil {
-		return nil, err
-	}
-
-	if options == nil {
-		options = &Options{}
-	}
-
-	mic.format = "s16le" // Default format.
-	if options.Format != "" {
-		mic.format = options.Format
-	}
-
-	if options.SampleRate != 0 {
-		mic.samplerate = options.SampleRate
-	}
-
-	if options.Channels != 0 {
-		mic.channels = options.Channels
-	}
-
-	if err := checkFormat(mic.format); err != nil {
-		return nil, err
-	}
-
-	mic.bps = int(parse(regexp.MustCompile(`\d{1,2}`).FindString(mic.format))) // Bits per sample.
-
-	return &mic, nil
 }
 
 // Once the user calls Read() for the first time on a Microphone struct,

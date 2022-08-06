@@ -169,10 +169,44 @@ func contains(list []string, item string) bool {
 	return false
 }
 
+// Check audio format string.
 func checkFormat(format string) error {
 	match := regexp.MustCompile(`^(([us]8)|([us]((16)|(24)|(32))[bl]e)|(f((32)|(64))[bl]e))$`)
 	if len(match.FindString(format)) == 0 {
 		return fmt.Errorf("audio format %s is not supported", format)
 	}
 	return nil
+}
+
+// Returns the microphone device name.
+// On windows, ffmpeg output from the -list_devices command is parsed to find the device name.
+func getDevicesWindows() ([]string, error) {
+	// Run command to get list of devices.
+	cmd := exec.Command(
+		"ffmpeg",
+		"-hide_banner",
+		"-list_devices", "true",
+		"-f", "dshow",
+		"-i", "dummy",
+	)
+	pipe, err := cmd.StderrPipe()
+	if err != nil {
+		return nil, err
+	}
+	if err := cmd.Start(); err != nil {
+		return nil, err
+	}
+	// Read list devices from Stdout.
+	buffer := make([]byte, 2<<10)
+	total := 0
+	for {
+		n, err := pipe.Read(buffer[total:])
+		total += n
+		if err == io.EOF {
+			break
+		}
+	}
+	cmd.Wait()
+	devices := parseDevices(buffer)
+	return devices, nil
 }

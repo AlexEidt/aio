@@ -12,6 +12,42 @@ func assertEquals(actual, expected interface{}) {
 	}
 }
 
+func TestFormatParsing(t *testing.T) {
+	formats := make(map[string]bool)
+	formats["s16le"] = true
+	formats["s16be"] = true
+	formats["s24le"] = true
+	formats["s24be"] = true
+	formats["s32le"] = true
+	formats["s32be"] = true
+	formats["s8"] = true
+	formats["u16le"] = true
+	formats["u16be"] = true
+	formats["u24le"] = true
+	formats["u24be"] = true
+	formats["u32le"] = true
+	formats["u32be"] = true
+	formats["u8"] = true
+	formats["f32le"] = true
+	formats["f32be"] = true
+	formats["f64le"] = true
+	formats["f64be"] = true
+	formats["alaw"] = false
+	formats["mulaw"] = false
+	formats["f64"] = false
+	formats["f32"] = false
+	formats["u8be"] = false
+
+	for format, expected := range formats {
+		err := checkFormat(format)
+		if expected != (err == nil) {
+			panic(fmt.Sprintf("Format %s failed", format))
+		}
+	}
+
+	fmt.Println("Format Parsing Test Passed")
+}
+
 func TestSetBuffer(t *testing.T) {
 	audio, err := NewAudio("test/beach.mp3", "s16le")
 	if err != nil {
@@ -156,11 +192,10 @@ dummy: Immediate exit requested`,
 
 func TestWebcamParsing(t *testing.T) {
 	mic := &Microphone{}
-	err := getMicrophoneData(
+	err := mic.getMicrophoneData(
 		`Input #0, dshow, from 'audio=Microphone Array (Realtek High Definition Audio(SST))':
 		Duration: N/A, start: 653436.725000, bitrate: 1411 kb/s
 		Stream #0:0: Audio: pcm_s16le, 44100 Hz, stereo, s16, 1411 kb/s`,
-		mic,
 	)
 
 	if err != nil {

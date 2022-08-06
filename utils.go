@@ -91,25 +91,6 @@ func parseFFprobe(input []byte) map[string]string {
 	return data
 }
 
-// Adds audio data to the Audio struct from the ffprobe output.
-func addAudioData(data map[string]string, audio *Audio) {
-	if samplerate, ok := data["sample_rate"]; ok {
-		audio.samplerate = int(parse(samplerate))
-	}
-	if channels, ok := data["channels"]; ok {
-		audio.channels = int(parse(channels))
-	}
-	if bitrate, ok := data["bit_rate"]; ok {
-		audio.bitrate = int(parse(bitrate))
-	}
-	if duration, ok := data["duration"]; ok {
-		audio.duration = float64(parse(duration))
-	}
-	if codec, ok := data["codec_name"]; ok {
-		audio.codec = codec
-	}
-}
-
 // Parses the given data into a float64.
 func parse(data string) float64 {
 	n, err := strconv.ParseFloat(data, 64)
@@ -179,7 +160,6 @@ func parseDevices(buffer []byte) []string {
 	return devices
 }
 
-// Helper function. Array contains function.
 func contains(list []string, item string) bool {
 	for _, i := range list {
 		if i == item {
@@ -189,26 +169,10 @@ func contains(list []string, item string) bool {
 	return false
 }
 
-// Parses the microphone metadata from ffmpeg output.
-func parseMicrophoneData(buffer []byte, mic *Microphone) {
-	bufferstr := string(buffer)
-	// Sample String: "Stream #0:0: Audio: pcm_s16le, 44100 Hz, stereo, s16, 1411 kb/s".
-	index := strings.Index(bufferstr, "Stream #")
-	if index == -1 {
-		index++
+func checkFormat(format string) error {
+	match := regexp.MustCompile(`^(([us]8)|([us]((16)|(24)|(32))[bl]e)|(f((32)|(64))[bl]e))$`)
+	if len(match.FindString(format)) == 0 {
+		return fmt.Errorf("audio format %s is not supported", format)
 	}
-	bufferstr = bufferstr[index:]
-	// Sample rate.
-	regex := regexp.MustCompile(`\d+ Hz`)
-	match := regex.FindString(bufferstr)
-	if len(match) > 0 {
-		mic.samplerate = int(parse(match[:len(match)-len(" Hz")]))
-	}
-
-	mic.channels = 2 // stereo by default.
-	if strings.Contains(bufferstr, "stereo") {
-		mic.channels = 2
-	} else if strings.Contains(bufferstr, "mono") {
-		mic.channels = 1
-	}
+	return nil
 }

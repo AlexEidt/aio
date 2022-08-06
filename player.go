@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"regexp"
 	"syscall"
 )
 
@@ -54,9 +53,8 @@ func NewPlayer(channels, samplerate int, format string) (*Player, error) {
 		return nil, err
 	}
 
-	match := regexp.MustCompile(`^[fsu]\d{1,2}[lb]e$`)
-	if !(format == "mulaw" || format == "alaw") && len(match.FindString(format)) == 0 {
-		return nil, fmt.Errorf("audio format %s is not supported", format)
+	if err := checkFormat(format); err != nil {
+		return nil, err
 	}
 
 	cmd := exec.Command(

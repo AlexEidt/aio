@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"regexp"
 	"syscall"
 )
 
@@ -90,11 +89,9 @@ func NewAudioWriter(filename string, options *Options) (*AudioWriter, error) {
 
 	writer.format = "s16le"
 	if options.Format != "" {
-		match := regexp.MustCompile(`^[fsu]\d{1,2}[lb]e$`)
-		if options.Format == "mulaw" || options.Format == "alaw" || len(match.FindString(options.Format)) == 0 {
-			return nil, fmt.Errorf("audio format %s is not supported", options.Format)
+		if err := checkFormat(options.Format); err != nil {
+			return nil, err
 		}
-
 		writer.format = options.Format
 	}
 
@@ -118,7 +115,7 @@ func NewAudioWriter(filename string, options *Options) (*AudioWriter, error) {
 
 // Once the user calls Write() for the first time on a AudioWriter struct,
 // the ffmpeg command which is used to write to the audio file is started.
-func initAudioWriter(writer *AudioWriter) error {
+func (writer *AudioWriter) init() error {
 	// If user exits with Ctrl+C, stop ffmpeg process.
 	writer.cleanup()
 	// ffmpeg command to write to audio file. Takes in bytes from Stdin and encodes them.
@@ -175,7 +172,7 @@ func initAudioWriter(writer *AudioWriter) error {
 func (writer *AudioWriter) Write(buffer []byte) error {
 	// If cmd is nil, audio writing has not been set up.
 	if writer.cmd == nil {
-		if err := initAudioWriter(writer); err != nil {
+		if err := writer.init(); err != nil {
 			return err
 		}
 	}

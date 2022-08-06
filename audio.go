@@ -87,13 +87,11 @@ func NewAudio(filename, format string) (*Audio, error) {
 		return nil, fmt.Errorf("no audio data found in %s", filename)
 	}
 
-	match := regexp.MustCompile(`^[fsu]\d{1,2}[lb]e$`)
-	if format == "mulaw" || format == "alaw" || len(match.FindString(format)) == 0 {
-		return nil, fmt.Errorf("audio format %s is not supported", format)
+	if err := checkFormat(format); err != nil {
+		return nil, err
 	}
 
-	match = regexp.MustCompile(`\d{1,2}`)
-	bps := int(parse(match.FindString(format))) // Bits per sample.
+	bps := int(parse(regexp.MustCompile(`\d{1,2}`).FindString(format))) // Bits per sample.
 
 	audio := &Audio{
 		filename: filename,
@@ -101,14 +99,33 @@ func NewAudio(filename, format string) (*Audio, error) {
 		bps:      bps,
 	}
 
-	addAudioData(audioData, audio)
+	audio.addAudioData(audioData)
 
 	return audio, nil
 }
 
+// Adds audio data to the Audio struct from the ffprobe output.
+func (audio *Audio) addAudioData(data map[string]string) {
+	if samplerate, ok := data["sample_rate"]; ok {
+		audio.samplerate = int(parse(samplerate))
+	}
+	if channels, ok := data["channels"]; ok {
+		audio.channels = int(parse(channels))
+	}
+	if bitrate, ok := data["bit_rate"]; ok {
+		audio.bitrate = int(parse(bitrate))
+	}
+	if duration, ok := data["duration"]; ok {
+		audio.duration = float64(parse(duration))
+	}
+	if codec, ok := data["codec_name"]; ok {
+		audio.codec = codec
+	}
+}
+
 // Once the user calls Read() for the first time on a Audio struct,
 // the ffmpeg command which is used to read the audio is started.
-func initAudio(audio *Audio) error {
+func (audio *Audio) init() error {
 	// If user exits with Ctrl+C, stop ffmpeg process.
 	audio.cleanup()
 	// ffmpeg command to pipe audio data to stdout.
@@ -145,7 +162,7 @@ func initAudio(audio *Audio) error {
 func (audio *Audio) Read() bool {
 	// If cmd is nil, video reading has not been initialized.
 	if audio.cmd == nil {
-		if err := initAudio(audio); err != nil {
+		if err := audio.init(); err != nil {
 			return false
 		}
 	}

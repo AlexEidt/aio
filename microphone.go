@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"regexp"
 	"runtime"
+	"strings"
 	"syscall"
 )
 
@@ -85,8 +86,32 @@ func getDevicesWindows() ([]string, error) {
 	return devices, nil
 }
 
+// Parses the microphone metadata from ffmpeg output.
+func (mic *Microphone) parseMicrophoneData(buffer []byte) {
+	bufferstr := string(buffer)
+	// Sample String: "Stream #0:0: Audio: pcm_s16le, 44100 Hz, stereo, s16, 1411 kb/s".
+	index := strings.Index(bufferstr, "Stream #")
+	if index == -1 {
+		index++
+	}
+	bufferstr = bufferstr[index:]
+	// Sample rate.
+	regex := regexp.MustCompile(`\d+ Hz`)
+	match := regex.FindString(bufferstr)
+	if len(match) > 0 {
+		mic.samplerate = int(parse(match[:len(match)-len(" Hz")]))
+	}
+
+	mic.channels = 2 // stereo by default.
+	if strings.Contains(bufferstr, "stereo") {
+		mic.channels = 2
+	} else if strings.Contains(bufferstr, "mono") {
+		mic.channels = 1
+	}
+}
+
 // Get microphone meta data such as width, height, fps and codec.
-func getMicrophoneData(device string, mic *Microphone) error {
+func (mic *Microphone) getMicrophoneData(device string) error {
 	// Run command to get microphone data.
 	micDeviceName, err := microphone()
 	if err != nil {
@@ -121,7 +146,7 @@ func getMicrophoneData(device string, mic *Microphone) error {
 	// Wait for the command to finish.
 	cmd.Wait()
 
-	parseMicrophoneData(buffer[:total], mic)
+	mic.parseMicrophoneData(buffer[:total])
 	return nil
 }
 
@@ -155,7 +180,7 @@ func NewMicrophone(stream int, options *Options) (*Microphone, error) {
 
 	mic := Microphone{name: device}
 
-	if err := getMicrophoneData(device, &mic); err != nil {
+	if err := mic.getMicrophoneData(device); err != nil {
 		return nil, err
 	}
 
@@ -176,20 +201,18 @@ func NewMicrophone(stream int, options *Options) (*Microphone, error) {
 		mic.channels = options.Channels
 	}
 
-	match := regexp.MustCompile(`^[fsu]\d{1,2}[lb]e$`)
-	if mic.format == "mulaw" || mic.format == "alaw" || len(match.FindString(mic.format)) == 0 {
-		return nil, fmt.Errorf("audio format %s is not supported", mic.format)
+	if err := checkFormat(mic.format); err != nil {
+		return nil, err
 	}
 
-	match = regexp.MustCompile(`\d{1,2}`)
-	mic.bps = int(parse(match.FindString(mic.format))) // Bits per sample.
+	mic.bps = int(parse(regexp.MustCompile(`\d{1,2}`).FindString(mic.format))) // Bits per sample.
 
 	return &mic, nil
 }
 
 // Once the user calls Read() for the first time on a Microphone struct,
 // the ffmpeg command which is used to read the microphone device is started.
-func initMicrophone(mic *Microphone) error {
+func (mic *Microphone) init() error {
 	// If user exits with Ctrl+C, stop ffmpeg process.
 	mic.cleanup()
 
@@ -234,7 +257,7 @@ func initMicrophone(mic *Microphone) error {
 func (mic *Microphone) Read() bool {
 	// If cmd is nil, microphone reading has not been initialized.
 	if mic.cmd == nil {
-		if err := initMicrophone(mic); err != nil {
+		if err := mic.init(); err != nil {
 			return false
 		}
 	}

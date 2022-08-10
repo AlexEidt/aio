@@ -10,6 +10,9 @@ import (
 )
 
 func Play(filename string) error {
+	if !exists(filename) {
+		return fmt.Errorf("file %s does not exist", filename)
+	}
 	// Check if ffplay is installed on the users machine.
 	if err := checkExists("ffplay"); err != nil {
 		return nil

@@ -134,7 +134,7 @@ audio, _ := aio.NewAudio("input.wav", "s16le")
 options := aio.Options{
 	SampleRate: audio.SampleRate(),
 	Channels:   audio.Channels(),
-	Bitrate:    audio.BitRate(),
+	Bitrate:    audio.Bitrate(),
 	Format:     audio.Format(),
 	Codec:      audio.Codec(),
 }

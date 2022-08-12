@@ -136,7 +136,6 @@ options := aio.Options{
 	Channels:   audio.Channels(),
 	Bitrate:    audio.Bitrate(),
 	Format:     audio.Format(),
-	Codec:      audio.Codec(),
 }
 
 writer, _ := aio.NewAudioWriter("output.mp3", &options)

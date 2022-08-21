@@ -38,7 +38,7 @@ aio.NewAudio(filename, format string) (*Audio, error)
 FileName() string
 SampleRate() int
 Channels() int
-BitRate() int
+Bitrate() int
 Duration() float64
 Format() string
 Codec() string

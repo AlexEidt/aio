@@ -59,7 +59,6 @@ func (writer *AudioWriter) Video() string {
 	return writer.video
 }
 
-// Creates a new AudioWriter struct with default values from the Options struct.
 func NewAudioWriter(filename string, options *Options) (*AudioWriter, error) {
 	// Check if ffmpeg is installed on the users machine.
 	if err := checkExists("ffmpeg"); err != nil {

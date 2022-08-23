@@ -49,7 +49,7 @@ func TestFormatParsing(t *testing.T) {
 }
 
 func TestSetBuffer(t *testing.T) {
-	audio, err := NewAudio("test/beach.mp3", "s16le")
+	audio, err := NewAudio("test/beach.mp3", nil)
 	if err != nil {
 		panic(err)
 	}
@@ -66,7 +66,7 @@ func TestSetBuffer(t *testing.T) {
 }
 
 func TestAudioIO(t *testing.T) {
-	audio, err := NewAudio("test/beach.mp3", "s16le")
+	audio, err := NewAudio("test/beach.mp3", nil)
 	if err != nil {
 		panic(err)
 	}
@@ -86,7 +86,7 @@ func TestAudioIO(t *testing.T) {
 }
 
 func TestAudioBuffer(t *testing.T) {
-	audio, err1 := NewAudio("test/beach.mp3", "s16le")
+	audio, err1 := NewAudio("test/beach.mp3", nil)
 	if err1 != nil {
 		panic(err1)
 	}
@@ -112,7 +112,7 @@ func TestAudioBuffer(t *testing.T) {
 }
 
 func TestAudioPlayback(t *testing.T) {
-	audio, err1 := NewAudio("test/beach.mp3", "s16le")
+	audio, err1 := NewAudio("test/beach.mp3", nil)
 	if err1 != nil {
 		panic(err1)
 	}
@@ -134,7 +134,7 @@ func TestAudioPlayback(t *testing.T) {
 }
 
 func TestAudioCopying(t *testing.T) {
-	audio, err1 := NewAudio("test/beach.mp3", "s16le")
+	audio, err1 := NewAudio("test/beach.mp3", nil)
 	if err1 != nil {
 		panic(err1)
 	}
@@ -159,6 +159,31 @@ func TestAudioCopying(t *testing.T) {
 	os.Remove("test/output.mp3")
 
 	fmt.Println("Audio Copying test passed.")
+}
+
+func TestAudioResampling(t *testing.T) {
+	options := Options{
+		SampleRate: 4000,
+		Channels:   1,
+		Format:     "f32be",
+	}
+	audio, err1 := NewAudio("test/beach.mp3", &options)
+	if err1 != nil {
+		panic(err1)
+	}
+
+	defer audio.Close()
+	assertEquals(audio.FileName(), "test/beach.mp3")
+	assertEquals(audio.SampleRate(), 4000)
+	assertEquals(audio.Channels(), 1)
+	assertEquals(audio.Bitrate(), 128000)
+	assertEquals(audio.Duration(), 1.032)
+	assertEquals(audio.Format(), "f32be")
+	assertEquals(audio.Codec(), "mp3")
+	assertEquals(audio.BitsPerSample(), 32)
+	assertEquals(len(audio.Buffer()), 0)
+
+	fmt.Println("Audio Resampling test passed.")
 }
 
 // Linux and MacOS allow the user to directly choose a microphone stream by index.

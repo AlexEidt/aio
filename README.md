@@ -22,6 +22,21 @@ As an example, if there is stereo sound (two channels) encoded in the `s16le` (s
 
 Continuing on with this example, since this is stereo audio with 2 channels, one frame of audio is represented by 2 consecutive integers, one for each channel. Each integer is 16 bits, which means one frame of audio would be represented by 4 consecutive bytes.
 
+## `Options`
+
+The `Options` struct is used to specify optional parameters for Audio I/O.
+
+```go
+type Options struct {
+	SampleRate int    // Sample rate in Hz.
+	Channels   int    // Number of channels.
+	Bitrate    int    // Bitrate.
+	Format     string // Format of audio.
+	Codec      string // Audio Codec.
+	Video      string // Video file to use.
+}
+```
+
 ## `Audio`
 
 `Audio` is used to read audio from files. It can also be used to gather audio metadata from a file. By default, the audio buffer has a length of
@@ -32,8 +47,10 @@ sample rate * channels * bytes per sample
 
 which corresponds to 1 second of audio data.
 
+The user may pass in `options` to set the desired sampling rate, format and channels of the audio. If `options` is `nil`, then the channels and sampling rate from the file will be used, with a default format of `"s16le"`.
+
 ```go
-aio.NewAudio(filename, format string) (*Audio, error)
+aio.NewAudio(filename, options *aio.Options) (*Audio, error)
 
 FileName() string
 SampleRate() int
@@ -52,7 +69,7 @@ Close()
 
 ## `AudioWriter`
 
-`AudioWriter` is used to write audio to files from a `byte` buffer. It comes with an `Options` struct that can be used to specify certain metadata of the output audio file.
+`AudioWriter` is used to write audio to files from a `byte` buffer. It comes with an `Options` struct that can be used to specify certain metadata of the output audio file. If `options` is `nil`, the defaults used are a sampling rate of `44100 Hz`, with `2` channels in the `"s16le"` format.
 
 ```go
 aio.NewAudioWriter(filename string, options *aio.Options) (*AudioWriter, error)
@@ -67,17 +84,6 @@ Video() string
 
 Write(frame []byte) error
 Close()
-```
-
-```go
-type Options struct {
-	SampleRate int    // Sample rate in Hz.
-	Channels   int    // Number of channels.
-	Bitrate    int    // Bitrate.
-	Format     string // Format of audio.
-	Codec      string // Audio Codec.
-	Video      string // Video file to use.
-}
 ```
 
 ## `Microphone`
@@ -129,7 +135,7 @@ aio.Play(filename string) error
 Copy `input.wav` to `output.mp3`.
 
 ```go
-audio, _ := aio.NewAudio("input.wav", "s16le")
+audio, _ := aio.NewAudio("input.wav", nil)
 
 options := aio.Options{
 	SampleRate: audio.SampleRate(),
@@ -172,7 +178,7 @@ for mic.Read() && seconds < 10 {
 Play `input.mp4`.
 
 ```go
-audio, _ := aio.NewAudio("input.mp4", "s16le")
+audio, _ := aio.NewAudio("input.mp4", nil)
 player, _ := aio.NewPlayer(
 	audio.Channels(),
 	audio.SampleRate(),
@@ -188,7 +194,7 @@ for audio.Read() {
 Combine `sound.wav` and `movie.mp4` into `output.mp4`.
 
 ```go
-audio, _ := aio.NewAudio("sound.wav", "s16le")
+audio, _ := aio.NewAudio("sound.wav", nil)
 
 options := aio.Options{
 	SampleRate: audio.SampleRate(),

@@ -64,9 +64,7 @@ func (audio *Audio) SetBuffer(buffer []byte) {
 	audio.buffer = buffer
 }
 
-// Creates a new Audio struct.
-// Uses ffprobe to get audio information and fills in the Audio struct with this data.
-func NewAudio(filename, format string) (*Audio, error) {
+func NewAudio(filename string, options *Options) (*Audio, error) {
 	if !exists(filename) {
 		return nil, fmt.Errorf("video file %s does not exist", filename)
 	}
@@ -87,19 +85,34 @@ func NewAudio(filename, format string) (*Audio, error) {
 		return nil, fmt.Errorf("no audio data found in %s", filename)
 	}
 
-	if err := checkFormat(format); err != nil {
+	audio := &Audio{filename: filename}
+
+	if options == nil {
+		options = &Options{}
+	}
+
+	if options.Format == "" {
+		audio.format = "s16le"
+	} else {
+		audio.format = options.Format
+	}
+
+	if err := checkFormat(audio.format); err != nil {
 		return nil, err
 	}
 
-	bps := int(parse(regexp.MustCompile(`\d{1,2}`).FindString(format))) // Bits per sample.
-
-	audio := &Audio{
-		filename: filename,
-		format:   format,
-		bps:      bps,
-	}
+	bps := int(parse(regexp.MustCompile(`\d{1,2}`).FindString(audio.format))) // Bits per sample.
+	audio.bps = bps
 
 	audio.addAudioData(audioData)
+
+	if options.SampleRate != 0 {
+		audio.samplerate = options.SampleRate
+	}
+
+	if options.Channels != 0 {
+		audio.channels = options.Channels
+	}
 
 	return audio, nil
 }

@@ -53,7 +53,6 @@ func (mic *Microphone) SetBuffer(buffer []byte) {
 	mic.buffer = buffer
 }
 
-// Creates a new microphone struct that can read from the device with the given stream index.
 func NewMicrophone(stream int, options *Options) (*Microphone, error) {
 	// Check if ffmpeg is installed on the users machine.
 	if err := checkExists("ffmpeg"); err != nil {

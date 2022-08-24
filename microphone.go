@@ -72,15 +72,15 @@ func NewMicrophone(stream int, options *Options) (*Microphone, error) {
 		if err != nil {
 			return nil, err
 		}
-		if stream >= len(devices) {
+		if stream < 0 || stream >= len(devices) {
 			return nil, fmt.Errorf("could not find device with index: %d", stream)
 		}
-		device = "audio=" + devices[stream]
+		device = fmt.Sprintf("audio=%s", devices[stream])
 	default:
 		return nil, fmt.Errorf("unsupported OS: %s", runtime.GOOS)
 	}
 
-	mic := Microphone{name: device}
+	mic := &Microphone{name: device}
 
 	if err := mic.getMicrophoneData(device); err != nil {
 		return nil, err
@@ -109,7 +109,7 @@ func NewMicrophone(stream int, options *Options) (*Microphone, error) {
 
 	mic.bps = int(parse(regexp.MustCompile(`\d{1,2}`).FindString(mic.format))) // Bits per sample.
 
-	return &mic, nil
+	return mic, nil
 }
 
 // Parses the microphone metadata from ffmpeg output.

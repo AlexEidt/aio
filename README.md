@@ -50,7 +50,7 @@ which corresponds to 1 second of audio data.
 The user may pass in `options` to set the desired sampling rate, format and channels of the audio. If `options` is `nil`, then the channels and sampling rate from the file will be used, with a default format of `"s16le"`.
 
 ```go
-aio.NewAudio(filename, options *aio.Options) (*Audio, error)
+aio.NewAudio(filename, options *aio.Options) (*aio.Audio, error)
 
 FileName() string
 SampleRate() int
@@ -72,7 +72,7 @@ Close()
 `AudioWriter` is used to write audio to files from a `byte` buffer. It comes with an `Options` struct that can be used to specify certain metadata of the output audio file. If `options` is `nil`, the defaults used are a sampling rate of `44100 Hz`, with `2` channels in the `"s16le"` format.
 
 ```go
-aio.NewAudioWriter(filename string, options *aio.Options) (*AudioWriter, error)
+aio.NewAudioWriter(filename string, options *aio.Options) (*aio.AudioWriter, error)
 
 FileName() string
 SampleRate() int
@@ -99,7 +99,7 @@ and selecting the desired stream. For linux, see [this page](https://trac.ffmpeg
 Additionally, an `options` parameter may be passed to specify the format, sampling rate and audio channels the microphone should record at. Any other options are ignored.
 
 ```go
-aio.NewMicrophone(stream int, options *aio.Options) (*Microphone, error)
+aio.NewMicrophone(stream int, options *aio.Options) (*aio.Microphone, error)
 
 Name() string
 SampleRate() int
@@ -118,7 +118,7 @@ Close()
 `Player` is used to play audio from a `byte` buffer.
 
 ```go
-aio.NewPlayer(channels, samplerate int, format string) (*Player, error)
+aio.NewPlayer(channels, samplerate int, format string) (*aio.Player, error)
 
 Play(buffer []byte) error
 Close()

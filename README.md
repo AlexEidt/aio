@@ -50,7 +50,7 @@ which corresponds to 1 second of audio data.
 The user may pass in `options` to set the desired sampling rate, format and channels of the audio. If `options` is `nil`, then the channels and sampling rate from the file will be used, with a default format of `"s16le"`.
 
 ```go
-aio.NewAudio(filename, options *aio.Options) (*aio.Audio, error)
+aio.NewAudio(filename string, options *aio.Options) (*aio.Audio, error)
 
 FileName() string
 SampleRate() int

@@ -50,7 +50,7 @@ type Player struct {
 	cmd  *exec.Cmd       // ffplay command.
 }
 
-func NewPlayer(channels, samplerate int, format string) (*Player, error) {
+func NewPlayer(channels, sampleRate int, format string) (*Player, error) {
 	// Check if ffplay is installed on the users machine.
 	if err := checkExists("ffplay"); err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func NewPlayer(channels, samplerate int, format string) (*Player, error) {
 		"ffplay",
 		"-f", format,
 		"-ac", fmt.Sprintf("%d", channels),
-		"-ar", fmt.Sprintf("%d", samplerate),
+		"-ar", fmt.Sprintf("%d", sampleRate),
 		"-i", "-",
 		"-nodisp",
 		"-autoexit",

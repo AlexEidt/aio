@@ -118,7 +118,7 @@ Close()
 `Player` is used to play audio from a `byte` buffer.
 
 ```go
-aio.NewPlayer(channels, samplerate int, format string) (*aio.Player, error)
+aio.NewPlayer(channels, sampleRate int, format string) (*aio.Player, error)
 
 Play(buffer []byte) error
 Close()

@@ -82,7 +82,7 @@ Format() string
 Codec() string
 Video() string
 
-Write(frame []byte) error
+Write(buffer []byte) error
 Close()
 ```
 

@@ -47,10 +47,18 @@ func (mic *Microphone) Buffer() []byte {
 	return mic.buffer
 }
 
+func (mic *Microphone) Samples() interface{} {
+	return convertBytesToSamples(mic.buffer, len(mic.buffer)/(mic.bps/8), mic.format)
+}
+
 // Sets the framebuffer to the given byte array. Note that "buffer" must be large enough
 // to store one frame of mic data.
-func (mic *Microphone) SetBuffer(buffer []byte) {
+func (mic *Microphone) SetBuffer(buffer []byte) error {
+	if len(buffer)%(mic.bps/8*mic.channels) != 0 {
+		return fmt.Errorf("buffer size must be multiple of %d", mic.bps/8*mic.channels)
+	}
 	mic.buffer = buffer
+	return nil
 }
 
 func NewMicrophone(stream int, options *Options) (*Microphone, error) {

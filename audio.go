@@ -60,8 +60,16 @@ func (audio *Audio) Buffer() []byte {
 	return audio.buffer
 }
 
-func (audio *Audio) SetBuffer(buffer []byte) {
+func (audio *Audio) Samples() interface{} {
+	return convertBytesToSamples(audio.buffer, len(audio.buffer)/(audio.bps/8), audio.format)
+}
+
+func (audio *Audio) SetBuffer(buffer []byte) error {
+	if len(buffer)%(audio.bps/8*audio.channels) != 0 {
+		return fmt.Errorf("buffer size must be multiple of %d", audio.bps/8*audio.channels)
+	}
 	audio.buffer = buffer
+	return nil
 }
 
 func NewAudio(filename string, options *Options) (*Audio, error) {

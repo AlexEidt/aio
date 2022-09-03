@@ -12,7 +12,7 @@ go get github.com/AlexEidt/aio
 
 ## Buffers
 
-`aio` uses `byte` buffers to transport audio data. Audio data can take on many forms, including floating point, unsigned integer and signed integer. These types may be larger than a `byte` and would have to be split. Learn more about [available audio types](https://trac.ffmpeg.org/wiki/audio%20types) from the FFmpeg Wiki. `alaw` and `mulaw` codecs are currently not supported.
+`aio` uses `byte` buffers to transport raw audio data. Audio data can take on many forms, including floating point, unsigned integer and signed integer. These types may be larger than a `byte` and would have to be split. Learn more about [available audio types](https://trac.ffmpeg.org/wiki/audio%20types) from the FFmpeg Wiki. `alaw` and `mulaw` codecs are currently not supported.
 
 As an example, if there is stereo sound (two channels) encoded in the `s16le` (signed 16 bit integers, little endian) format with a sampling rate of `44100 Hz`, one second of audio would be
 
@@ -49,6 +49,10 @@ which corresponds to 1 second of audio data.
 
 The user may pass in `options` to set the desired sampling rate, format and channels of the audio. If `options` is `nil`, then the channels and sampling rate from the file will be used, with a default format of `"s16le"`.
 
+Note that the `Samples()` function is only present for convenience. It casts the raw byte buffer into the given audio data type determined by the `Format()` such that the underlying data buffers are the same. The `s24le`, `s24be`, `u24le` and `s24be` formats are not supported by the `Samples()` function since there is no type equivalent. Calling the `Samples()` function on 24-bit audio will return the raw byte buffer.
+
+The return value of the `Samples()` function will have to be cast into an array of the desired type (e.g. `audio.Samples().([]float32)`)
+
 ```go
 aio.NewAudio(filename string, options *aio.Options) (*aio.Audio, error)
 
@@ -61,7 +65,8 @@ Format() string
 Codec() string
 BitsPerSample() int
 Buffer() []byte
-SetBuffer(buffer []byte)
+Samples() interface{}
+SetBuffer(buffer []byte) error
 
 Read() bool
 Close()
@@ -82,7 +87,7 @@ Format() string
 Codec() string
 Video() string
 
-Write(buffer []byte) error
+Write(samples interface{}) error
 Close()
 ```
 
@@ -107,7 +112,8 @@ Channels() int
 Format() string
 BitsPerSample() int
 Buffer() []byte
-SetBuffer(buffer []byte)
+Samples() interface{}
+SetBuffer(buffer []byte) error
 
 Read() bool
 Close()
@@ -120,7 +126,7 @@ Close()
 ```go
 aio.NewPlayer(channels, sampleRate int, format string) (*aio.Player, error)
 
-Play(buffer []byte) error
+Play(samples interface{}) error
 Close()
 ```
 
@@ -188,6 +194,19 @@ defer player.Close()
 
 for audio.Read() {
 	player.Play(audio.Buffer())
+}
+```
+
+Read `input.wav` and process the audio samples.
+
+```go
+audio, _ := aio.NewAudio("input.wav", nil)
+
+for audio.Read() {
+	samples := audio.Samples().([]int16)
+	for i := range samples {
+		// audio processing...
+	}
 }
 ```
 

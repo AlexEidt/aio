@@ -88,7 +88,12 @@ func NewPlayer(channels, sampleRate int, format string) (*Player, error) {
 	return player, nil
 }
 
-func (player *Player) Play(buffer []byte) error {
+func (player *Player) Play(samples interface{}) error {
+	buffer := convertSamplesToBytes(samples)
+	if buffer == nil {
+		return fmt.Errorf("invalid sample data type")
+	}
+
 	total := 0
 	for total < len(buffer) {
 		n, err := (*player.pipe).Write(buffer[total:])

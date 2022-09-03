@@ -1,8 +1,9 @@
 package aio
 
 import (
+	"encoding/binary"
 	"fmt"
-	"os"
+	"math"
 	"testing"
 )
 
@@ -10,6 +11,61 @@ func assertEquals(actual, expected interface{}) {
 	if expected != actual {
 		panic(fmt.Sprintf("Expected %v, got %v", expected, actual))
 	}
+}
+
+func TestSamplesInt16(t *testing.T) {
+	audio, err := NewAudio("test/beach.mp3", &Options{Format: "u16le"})
+	if err != nil {
+		panic(err)
+	}
+
+	defer audio.Close()
+
+	for audio.Read() {
+		samples := audio.Samples().([]uint16)
+		bytes := audio.Buffer()
+
+		assertEquals(len(samples), len(bytes)/2)
+
+		index := 0
+		for i := 0; i < len(bytes); i += 2 {
+			sample := uint16(bytes[i+0]) | uint16(bytes[i+1])<<8
+			if sample != samples[index] {
+				panic("invalid sample conversion")
+			}
+			index++
+		}
+	}
+
+	fmt.Println("Sample Conversion Test (int16) Passed")
+}
+
+func TestSamplesFloat64(t *testing.T) {
+	audio, err := NewAudio("test/beach.mp3", &Options{Format: "f64le"})
+	if err != nil {
+		panic(err)
+	}
+
+	defer audio.Close()
+
+	for audio.Read() {
+		samples := audio.Samples().([]float64)
+		bytes := audio.Buffer()
+
+		assertEquals(len(samples), len(bytes)/8)
+
+		index := 0
+		for i := 0; i < len(bytes); i += 8 {
+			bits := binary.LittleEndian.Uint64(bytes[i : i+8])
+			sample := math.Float64frombits(bits)
+			if sample != samples[index] {
+				panic("invalid sample conversion")
+			}
+			index++
+		}
+	}
+
+	fmt.Println("Sample Conversion test (float64) passed")
 }
 
 func TestFormatParsing(t *testing.T) {
@@ -45,7 +101,24 @@ func TestFormatParsing(t *testing.T) {
 		}
 	}
 
-	fmt.Println("Format Parsing Test Passed")
+	fmt.Println("Format Parsing test passed")
+}
+
+func TestBufferAlignment(t *testing.T) {
+	audio, err1 := NewAudio("test/beach.mp3", nil)
+	if err1 != nil {
+		panic(err1)
+	}
+
+	// Since this audio is represented by stereo audio with 16-bit samples
+	// the byte buffer size should be a multiple of 4 (2 channels * 2 bytes per sample)
+	// since one frame of audio is 4 bytes.
+	err := audio.SetBuffer(make([]byte, 101))
+	if err == nil {
+		panic("failed SetBuffer check")
+	}
+
+	fmt.Println("Buffer Alignment test passed")
 }
 
 func TestSetBuffer(t *testing.T) {
@@ -56,13 +129,13 @@ func TestSetBuffer(t *testing.T) {
 
 	defer audio.Close()
 
-	audio.SetBuffer(make([]byte, 10))
+	audio.SetBuffer(make([]byte, 12))
 
 	audio.Read()
 
-	assertEquals(len(audio.Buffer()), 10)
+	assertEquals(len(audio.Buffer()), 12)
 
-	fmt.Println("Set Buffer Test Passed")
+	fmt.Println("Set Buffer test passed")
 }
 
 func TestAudioIO(t *testing.T) {
@@ -82,7 +155,7 @@ func TestAudioIO(t *testing.T) {
 	assertEquals(audio.BitsPerSample(), 16)
 	assertEquals(len(audio.Buffer()), 0)
 
-	fmt.Println("Audio File IO test passed.")
+	fmt.Println("Audio File IO test passed")
 }
 
 func TestAudioBuffer(t *testing.T) {
@@ -108,7 +181,7 @@ func TestAudioBuffer(t *testing.T) {
 	assertEquals(buffer[8], byte(94))
 	assertEquals(buffer[9], byte(0))
 
-	fmt.Println("Audio Buffer test passed.")
+	fmt.Println("Audio Buffer test passed")
 }
 
 func TestAudioPlayback(t *testing.T) {
@@ -130,11 +203,11 @@ func TestAudioPlayback(t *testing.T) {
 		player.Play(audio.Buffer())
 	}
 
-	fmt.Println("Audio Playback test passed.")
+	fmt.Println("Audio Playback test passed")
 }
 
 func TestAudioCopying(t *testing.T) {
-	audio, err1 := NewAudio("test/beach.mp3", nil)
+	audio, err1 := NewAudio("test/beach.mp3", &Options{Format: "s16be"})
 	if err1 != nil {
 		panic(err1)
 	}
@@ -150,15 +223,16 @@ func TestAudioCopying(t *testing.T) {
 		panic(err2)
 	}
 
+	data := make([]int16, audio.SampleRate()*audio.Channels()*audio.BitsPerSample()/8/2)
 	for audio.Read() {
-		writer.Write(audio.Buffer())
+		samples := audio.Samples().([]int16)
+		copy(data, samples)
+		writer.Write(data)
 	}
 
 	defer writer.Close()
 
-	os.Remove("test/output.mp3")
-
-	fmt.Println("Audio Copying test passed.")
+	fmt.Println("Audio Copying test passed")
 }
 
 func TestAudioResampling(t *testing.T) {
@@ -183,7 +257,7 @@ func TestAudioResampling(t *testing.T) {
 	assertEquals(audio.BitsPerSample(), 32)
 	assertEquals(len(audio.Buffer()), 0)
 
-	fmt.Println("Audio Resampling test passed.")
+	fmt.Println("Audio Resampling test passed")
 }
 
 // Linux and MacOS allow the user to directly choose a microphone stream by index.
@@ -212,10 +286,10 @@ dummy: Immediate exit requested`,
 	assertEquals(data[0], "Internal Microphone (Conexant 2")
 	assertEquals(data[1], "virtual-audio-capturer")
 
-	fmt.Println("Device Parsing for Windows Test Passed")
+	fmt.Println("Device Parsing for Windows test passed")
 }
 
-func TestWebcamParsing(t *testing.T) {
+func TestMicrophoneParsing(t *testing.T) {
 	mic := &Microphone{}
 	err := mic.getMicrophoneData(
 		`Input #0, dshow, from 'audio=Microphone Array (Realtek High Definition Audio(SST))':
@@ -230,5 +304,27 @@ func TestWebcamParsing(t *testing.T) {
 	assertEquals(mic.SampleRate(), int(44100))
 	assertEquals(mic.Channels(), int(2))
 
-	fmt.Println("Webcam Parsing Test Passed")
+	fmt.Println("Webcam Parsing test passed")
+}
+
+func TestMicrophone(t *testing.T) {
+	stream := 0
+	max := 10
+	mic, err := NewMicrophone(stream, nil)
+	for err != nil && stream < max {
+		stream++
+		mic, err = NewMicrophone(stream, nil)
+	}
+
+	if stream == max {
+		fmt.Println("No Microphone Found")
+		return
+	}
+
+	seconds := 0
+	for mic.Read() && seconds < 10 {
+		seconds++
+	}
+
+	fmt.Println("Microphone Reading test passed")
 }

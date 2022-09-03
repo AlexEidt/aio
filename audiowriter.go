@@ -158,7 +158,12 @@ func (writer *AudioWriter) init() error {
 }
 
 // Writes the given buffer to the audio file.
-func (writer *AudioWriter) Write(buffer []byte) error {
+func (writer *AudioWriter) Write(samples interface{}) error {
+	buffer := convertSamplesToBytes(samples)
+	if buffer == nil {
+		return fmt.Errorf("invalid sample data type")
+	}
+
 	// If cmd is nil, audio writing has not been set up.
 	if writer.cmd == nil {
 		if err := writer.init(); err != nil {

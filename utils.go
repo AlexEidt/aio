@@ -6,10 +6,12 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"reflect"
 	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
+	"unsafe"
 )
 
 // Returns true if file exists, false otherwise.
@@ -209,4 +211,101 @@ func getDevicesWindows() ([]string, error) {
 	cmd.Wait()
 	devices := parseDevices(buffer)
 	return devices, nil
+}
+
+// Alias the byte buffer as a certain type specified by the format string.
+func convertBytesToSamples(buffer []byte, size int, format string) interface{} {
+	switch format {
+	case "f32be", "f32le":
+		var data []float32
+		pointer := (*reflect.SliceHeader)(unsafe.Pointer(&data))
+		pointer.Data = (*reflect.SliceHeader)(unsafe.Pointer(&buffer)).Data
+		pointer.Cap = size
+		pointer.Len = size
+		return data
+	case "f64be", "f64le":
+		var data []float64
+		pointer := (*reflect.SliceHeader)(unsafe.Pointer(&data))
+		pointer.Data = (*reflect.SliceHeader)(unsafe.Pointer(&buffer)).Data
+		pointer.Cap = size
+		pointer.Len = size
+		return data
+	case "s16be", "s16le":
+		var data []int16
+		pointer := (*reflect.SliceHeader)(unsafe.Pointer(&data))
+		pointer.Data = (*reflect.SliceHeader)(unsafe.Pointer(&buffer)).Data
+		pointer.Cap = size
+		pointer.Len = size
+		return data
+	case "s32be", "s32le":
+		var data []int32
+		pointer := (*reflect.SliceHeader)(unsafe.Pointer(&data))
+		pointer.Data = (*reflect.SliceHeader)(unsafe.Pointer(&buffer)).Data
+		pointer.Cap = size
+		pointer.Len = size
+		return data
+	case "s8":
+		var data []int8
+		pointer := (*reflect.SliceHeader)(unsafe.Pointer(&data))
+		pointer.Data = (*reflect.SliceHeader)(unsafe.Pointer(&buffer)).Data
+		pointer.Cap = size
+		pointer.Len = size
+		return data
+	case "u16be", "u16le":
+		var data []uint16
+		pointer := (*reflect.SliceHeader)(unsafe.Pointer(&data))
+		pointer.Data = (*reflect.SliceHeader)(unsafe.Pointer(&buffer)).Data
+		pointer.Cap = size
+		pointer.Len = size
+		return data
+	case "u32be", "u32le":
+		var data []uint32
+		pointer := (*reflect.SliceHeader)(unsafe.Pointer(&data))
+		pointer.Data = (*reflect.SliceHeader)(unsafe.Pointer(&buffer)).Data
+		pointer.Cap = size
+		pointer.Len = size
+		return data
+	default:
+		return buffer
+	}
+}
+
+func convertSamplesToBytes(data interface{}) []byte {
+	var buffer []byte
+	pointer := (*reflect.SliceHeader)(unsafe.Pointer(&buffer))
+
+	var size int
+	switch data := data.(type) {
+	case []uint8:
+		pointer.Data = (*reflect.SliceHeader)(unsafe.Pointer(&data)).Data
+		size = len(data)
+	case []int8:
+		pointer.Data = (*reflect.SliceHeader)(unsafe.Pointer(&data)).Data
+		size = len(data)
+	case []uint16:
+		pointer.Data = (*reflect.SliceHeader)(unsafe.Pointer(&data)).Data
+		size = len(data) * 2
+	case []int16:
+		pointer.Data = (*reflect.SliceHeader)(unsafe.Pointer(&data)).Data
+		size = len(data) * 2
+	case []uint32:
+		pointer.Data = (*reflect.SliceHeader)(unsafe.Pointer(&data)).Data
+		size = len(data) * 4
+	case []int32:
+		pointer.Data = (*reflect.SliceHeader)(unsafe.Pointer(&data)).Data
+		size = len(data) * 4
+	case []float32:
+		pointer.Data = (*reflect.SliceHeader)(unsafe.Pointer(&data)).Data
+		size = len(data) * 4
+	case []float64:
+		pointer.Data = (*reflect.SliceHeader)(unsafe.Pointer(&data)).Data
+		size = len(data) * 8
+	default:
+		return nil
+	}
+
+	pointer.Cap = size
+	pointer.Len = size
+
+	return buffer
 }

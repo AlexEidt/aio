@@ -52,7 +52,7 @@ func (mic *Microphone) Samples() interface{} {
 	return convertBytesToSamples(mic.buffer, len(mic.buffer)/(mic.bps/8), mic.format)
 }
 
-// Sets the framebuffer to the given byte array. The length of the buffer must be a multiple
+// Sets the buffer to the given byte array. The length of the buffer must be a multiple
 // of (bytes per sample * audio channels).
 func (mic *Microphone) SetBuffer(buffer []byte) error {
 	if len(buffer)%(mic.bps/8*mic.channels) != 0 {

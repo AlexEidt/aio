@@ -66,6 +66,8 @@ func (audio *Audio) Samples() interface{} {
 	return convertBytesToSamples(audio.buffer, len(audio.buffer)/(audio.bps/8), audio.format)
 }
 
+// Sets the buffer to the given byte array. The length of the buffer must be a multiple
+// of (bytes per sample * audio channels).
 func (audio *Audio) SetBuffer(buffer []byte) error {
 	if len(buffer)%(audio.bps/8*audio.channels) != 0 {
 		return fmt.Errorf("buffer size must be multiple of %d", audio.bps/8*audio.channels)

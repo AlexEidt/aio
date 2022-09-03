@@ -28,6 +28,7 @@ func (audio *Audio) FileName() string {
 	return audio.filename
 }
 
+// Audio Sample Rate in Hz.
 func (audio *Audio) SampleRate() int {
 	return audio.samplerate
 }
@@ -40,6 +41,7 @@ func (audio *Audio) Bitrate() int {
 	return audio.bitrate
 }
 
+// Audio Duration in seconds.
 func (audio *Audio) Duration() float64 {
 	return audio.duration
 }

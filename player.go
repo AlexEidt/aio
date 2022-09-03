@@ -9,6 +9,7 @@ import (
 	"syscall"
 )
 
+// Play the audio from the given file.
 func Play(filename string) error {
 	if !exists(filename) {
 		return fmt.Errorf("file %s does not exist", filename)

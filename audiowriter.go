@@ -25,6 +25,7 @@ func (writer *AudioWriter) FileName() string {
 	return writer.filename
 }
 
+// Audio Sample Rate in Hz.
 func (writer *AudioWriter) SampleRate() int {
 	return writer.samplerate
 }
@@ -45,6 +46,7 @@ func (writer *AudioWriter) Codec() string {
 	return writer.codec
 }
 
+// Video file name being written along with the audio.
 func (writer *AudioWriter) Video() string {
 	return writer.video
 }
@@ -157,7 +159,7 @@ func (writer *AudioWriter) init() error {
 	return nil
 }
 
-// Writes the given buffer to the audio file.
+// Writes the given samples to the audio file.
 func (writer *AudioWriter) Write(samples interface{}) error {
 	buffer := convertSamplesToBytes(samples)
 	if buffer == nil {

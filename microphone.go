@@ -27,6 +27,7 @@ func (mic *Microphone) Name() string {
 	return mic.name
 }
 
+// Audio Sample Rate in Hz.
 func (mic *Microphone) SampleRate() int {
 	return mic.samplerate
 }
@@ -51,8 +52,8 @@ func (mic *Microphone) Samples() interface{} {
 	return convertBytesToSamples(mic.buffer, len(mic.buffer)/(mic.bps/8), mic.format)
 }
 
-// Sets the framebuffer to the given byte array. Note that "buffer" must be large enough
-// to store one frame of mic data.
+// Sets the framebuffer to the given byte array. The length of the buffer must be a multiple
+// of (bytes per sample * audio channels).
 func (mic *Microphone) SetBuffer(buffer []byte) error {
 	if len(buffer)%(mic.bps/8*mic.channels) != 0 {
 		return fmt.Errorf("buffer size must be multiple of %d", mic.bps/8*mic.channels)
@@ -227,7 +228,8 @@ func (mic *Microphone) init() error {
 	return nil
 }
 
-// Reads the next audio sample from the microphone and stores in the buffer.
+// Reads the next frame from of audio and stores it in the buffer.
+// If the last frame has been read, returns false, otherwise true.
 func (mic *Microphone) Read() bool {
 	// If cmd is nil, microphone reading has not been initialized.
 	if mic.cmd == nil {

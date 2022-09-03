@@ -74,7 +74,7 @@ Close()
 
 ## `AudioWriter`
 
-`AudioWriter` is used to write audio to files from a `byte` buffer. It comes with an `Options` struct that can be used to specify certain metadata of the output audio file. If `options` is `nil`, the defaults used are a sampling rate of `44100 Hz`, with `2` channels in the `"s16le"` format.
+`AudioWriter` is used to write audio to files from a buffer of audio samples. It comes with an `Options` struct that can be used to specify certain metadata of the output audio file. If `options` is `nil`, the defaults used are a sampling rate of `44100 Hz`, with `2` channels in the `"s16le"` format.
 
 ```go
 aio.NewAudioWriter(filename string, options *aio.Options) (*aio.AudioWriter, error)
@@ -121,7 +121,7 @@ Close()
 
 ## `Player`
 
-`Player` is used to play audio from a `byte` buffer.
+`Player` is used to play audio from a buffer of audio samples.
 
 ```go
 aio.NewPlayer(channels, sampleRate int, format string) (*aio.Player, error)

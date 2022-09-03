@@ -16,7 +16,7 @@ func Play(filename string) error {
 	}
 	// Check if ffplay is installed on the users machine.
 	if err := checkExists("ffplay"); err != nil {
-		return nil
+		return err
 	}
 
 	cmd := exec.Command(

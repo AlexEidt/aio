@@ -79,9 +79,9 @@ func NewAudioWriter(filename string, options *Options) (*AudioWriter, error) {
 	}
 
 	if options.Format == "" {
-		writer.format = fmt.Sprintf("s16%s", endianness())
+		writer.format = createFormat("s16") // s16 default format.
 	} else {
-		writer.format = fmt.Sprintf("%s%s", options.Format, endianness())
+		writer.format = createFormat(options.Format)
 		if err := checkFormat(writer.format); err != nil {
 			return nil, err
 		}

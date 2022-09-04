@@ -99,11 +99,10 @@ func NewMicrophone(stream int, options *Options) (*Microphone, error) {
 		options = &Options{}
 	}
 
-	mic.format = fmt.Sprintf("s16%s", endianness()) // Default format.
 	if options.Format == "" {
-		mic.format = fmt.Sprintf("s16%s", endianness())
+		mic.format = createFormat("s16") // s16 default format.
 	} else {
-		mic.format = fmt.Sprintf("%s%s", options.Format, endianness())
+		mic.format = createFormat(options.Format)
 	}
 
 	if err := checkFormat(mic.format); err != nil {

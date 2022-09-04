@@ -72,7 +72,7 @@ func NewPlayer(channels, samplerate int, format string) (*Player, error) {
 		return nil, err
 	}
 
-	format = fmt.Sprintf("%s%s", format, endianness())
+	format = createFormat(format)
 	if err := checkFormat(format); err != nil {
 		return nil, err
 	}

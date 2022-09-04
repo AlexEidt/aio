@@ -104,9 +104,9 @@ func NewAudio(filename string, options *Options) (*Audio, error) {
 	}
 
 	if options.Format == "" {
-		audio.format = fmt.Sprintf("s16%s", endianness())
+		audio.format = createFormat("s16") // s16 default format.
 	} else {
-		audio.format = fmt.Sprintf("%s%s", options.Format, endianness())
+		audio.format = createFormat(options.Format)
 	}
 
 	if err := checkFormat(audio.format); err != nil {

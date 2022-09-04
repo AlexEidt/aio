@@ -175,7 +175,8 @@ func contains(list []string, item string) bool {
 func checkFormat(format string) error {
 	match := regexp.MustCompile(`^(([us]8)|([us]((16)|(24)|(32))[bl]e)|(f((32)|(64))[bl]e))$`)
 	if len(match.FindString(format)) == 0 {
-		return fmt.Errorf("audio format %s is not supported", format)
+		formats := "u8, s8, u16, s16, u24, s24, u32, s32, f32, or f64"
+		return fmt.Errorf("audio format %s is not supported, must be one of %s", format[:len(format)-2], formats)
 	}
 	return nil
 }
@@ -211,6 +212,15 @@ func getDevicesWindows() ([]string, error) {
 	cmd.Wait()
 	devices := parseDevices(buffer)
 	return devices, nil
+}
+
+func createFormat(format string) string {
+	switch format {
+	case "u8", "s8":
+		return format
+	default:
+		return fmt.Sprintf("%s%s", format, endianness())
+	}
 }
 
 // Little Endian -> "le", Big Endian -> "be".

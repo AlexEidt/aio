@@ -254,6 +254,7 @@ func TestAudioResampling(t *testing.T) {
 	assertEquals(audio.Duration(), 1.032)
 	assertEquals(audio.Format(), "s8")
 	assertEquals(audio.Codec(), "mp3")
+	assertEquals(audio.Total(), 4128)
 	assertEquals(audio.BitsPerSample(), 8)
 	assertEquals(len(audio.Buffer()), 0)
 
@@ -312,6 +313,7 @@ func TestMicrophone(t *testing.T) {
 	max := 10
 	mic, err := NewMicrophone(stream, nil)
 	for err != nil && stream < max {
+		defer mic.Close()
 		stream++
 		mic, err = NewMicrophone(stream, nil)
 	}

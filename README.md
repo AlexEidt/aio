@@ -64,6 +64,7 @@ Duration() float64
 Format() string
 Codec() string
 BitsPerSample() int
+Total() int
 Buffer() []byte
 Samples() interface{}
 SetBuffer(buffer []byte) error

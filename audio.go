@@ -3,6 +3,7 @@ package aio
 import (
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -63,10 +64,19 @@ func (audio *Audio) BitsPerSample() int {
 	return audio.bps
 }
 
+// Returns the total number of audio samples in the file.
+func (audio *Audio) Total() int {
+	frame := audio.channels * audio.bps / 8
+	second := audio.samplerate * frame
+	total := int(math.Ceil(float64(second) * audio.duration))
+	return total + (frame-total%frame)%frame
+}
+
 func (audio *Audio) Buffer() []byte {
 	return audio.buffer
 }
 
+// Casts the values in the byte buffer to those specified by the audio format.
 func (audio *Audio) Samples() interface{} {
 	return convertBytesToSamples(audio.buffer, len(audio.buffer)/(audio.bps/8), audio.format)
 }

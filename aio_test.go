@@ -55,8 +55,14 @@ func TestSamplesFloat64(t *testing.T) {
 		assertEquals(len(samples), len(bytes)/8)
 
 		index := 0
+		endian := endianness()
 		for i := 0; i < len(bytes); i += 8 {
-			bits := binary.LittleEndian.Uint64(bytes[i : i+8])
+			var bits uint64
+			if endian == "le" {
+				bits = binary.LittleEndian.Uint64(bytes[i : i+8])
+			} else {
+				bits = binary.BigEndian.Uint64(bytes[i : i+8])
+			}
 			sample := math.Float64frombits(bits)
 			if sample != samples[index] {
 				panic("invalid sample conversion")

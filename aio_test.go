@@ -313,7 +313,7 @@ func TestMicrophone(t *testing.T) {
 	max := 10
 	mic, err := NewMicrophone(stream, nil)
 	for err != nil && stream < max {
-		defer mic.Close()
+		mic.Close()
 		stream++
 		mic, err = NewMicrophone(stream, nil)
 	}

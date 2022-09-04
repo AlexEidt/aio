@@ -47,7 +47,12 @@ func (audio *Audio) Duration() float64 {
 }
 
 func (audio *Audio) Format() string {
-	return audio.format[:len(audio.format)-2]
+	switch audio.format {
+	case "u8", "s8":
+		return audio.format
+	default:
+		return audio.format[:len(audio.format)-2]
+	}
 }
 
 func (audio *Audio) Codec() string {

@@ -63,7 +63,12 @@ func (player *Player) Channels() int {
 }
 
 func (player *Player) Format() string {
-	return player.format[:len(player.format)-2]
+	switch player.format {
+	case "u8", "s8":
+		return player.format
+	default:
+		return player.format[:len(player.format)-2]
+	}
 }
 
 func NewPlayer(channels, samplerate int, format string) (*Player, error) {

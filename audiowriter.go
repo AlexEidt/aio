@@ -39,7 +39,12 @@ func (writer *AudioWriter) Bitrate() int {
 }
 
 func (writer *AudioWriter) Format() string {
-	return writer.format[:len(writer.format)-2]
+	switch writer.format {
+	case "u8", "s8":
+		return writer.format
+	default:
+		return writer.format[:len(writer.format)-2]
+	}
 }
 
 func (writer *AudioWriter) Codec() string {

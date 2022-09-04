@@ -239,7 +239,7 @@ func TestAudioResampling(t *testing.T) {
 	options := Options{
 		SampleRate: 4000,
 		Channels:   1,
-		Format:     "f32",
+		Format:     "s8",
 	}
 	audio, err1 := NewAudio("test/beach.mp3", &options)
 	if err1 != nil {
@@ -252,9 +252,9 @@ func TestAudioResampling(t *testing.T) {
 	assertEquals(audio.Channels(), 1)
 	assertEquals(audio.Bitrate(), 128000)
 	assertEquals(audio.Duration(), 1.032)
-	assertEquals(audio.Format(), "f32")
+	assertEquals(audio.Format(), "s8")
 	assertEquals(audio.Codec(), "mp3")
-	assertEquals(audio.BitsPerSample(), 32)
+	assertEquals(audio.BitsPerSample(), 8)
 	assertEquals(len(audio.Buffer()), 0)
 
 	fmt.Println("Audio Resampling test passed")

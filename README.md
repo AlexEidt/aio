@@ -205,6 +205,7 @@ Read `input.wav` and process the audio samples.
 
 ```go
 audio, _ := aio.NewAudio("input.wav", nil)
+defer audio.Close()
 
 for audio.Read() {
 	samples := audio.Samples().([]int16)

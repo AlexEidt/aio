@@ -28,8 +28,14 @@ func TestSamplesInt16(t *testing.T) {
 		assertEquals(len(samples), len(bytes)/2)
 
 		index := 0
+		endian := endianness()
 		for i := 0; i < len(bytes); i += 2 {
-			sample := uint16(bytes[i+0]) | uint16(bytes[i+1])<<8
+			var sample uint16
+			if endian == "le" {
+				sample = uint16(bytes[i+0]) | uint16(bytes[i+1])<<8
+			} else {
+				sample = uint16(bytes[i+1]) | uint16(bytes[i+0])<<8
+			}
 			if sample != samples[index] {
 				panic("invalid sample conversion")
 			}

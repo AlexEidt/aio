@@ -47,16 +47,32 @@ func Play(filename string) error {
 }
 
 type Player struct {
-	pipe *io.WriteCloser // Stdin pipe for ffplay process.
-	cmd  *exec.Cmd       // ffplay command.
+	samplerate int             // Audio Sample Rate in Hz.
+	channels   int             // Number of audio channels.
+	format     string          // Format of audio samples.
+	pipe       *io.WriteCloser // Stdin pipe for ffplay process.
+	cmd        *exec.Cmd       // ffplay command.
 }
 
-func NewPlayer(channels, sampleRate int, format string) (*Player, error) {
+func (player *Player) SampleRate() int {
+	return player.samplerate
+}
+
+func (player *Player) Channels() int {
+	return player.channels
+}
+
+func (player *Player) Format() string {
+	return player.format[:len(player.format)-2]
+}
+
+func NewPlayer(channels, samplerate int, format string) (*Player, error) {
 	// Check if ffplay is installed on the users machine.
 	if err := checkExists("ffplay"); err != nil {
 		return nil, err
 	}
 
+	format = fmt.Sprintf("%s%s", format, endianness())
 	if err := checkFormat(format); err != nil {
 		return nil, err
 	}
@@ -65,14 +81,18 @@ func NewPlayer(channels, sampleRate int, format string) (*Player, error) {
 		"ffplay",
 		"-f", format,
 		"-ac", fmt.Sprintf("%d", channels),
-		"-ar", fmt.Sprintf("%d", sampleRate),
+		"-ar", fmt.Sprintf("%d", samplerate),
 		"-i", "-",
 		"-nodisp",
 		"-autoexit",
 		"-loglevel", "quiet",
 	)
 
-	player := &Player{}
+	player := &Player{
+		samplerate: samplerate,
+		channels:   channels,
+		format:     format,
+	}
 
 	player.cmd = cmd
 	pipe, err := cmd.StdinPipe()

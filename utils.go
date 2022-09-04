@@ -213,6 +213,17 @@ func getDevicesWindows() ([]string, error) {
 	return devices, nil
 }
 
+// Little Endian -> "le", Big Endian -> "be".
+func endianness() string {
+	x := 1
+	littleEndian := *(*byte)(unsafe.Pointer(&x)) == 1
+	if littleEndian {
+		return "le"
+	} else {
+		return "be"
+	}
+}
+
 // Alias the byte buffer as a certain type specified by the format string.
 func convertBytesToSamples(buffer []byte, size int, format string) interface{} {
 	switch format {

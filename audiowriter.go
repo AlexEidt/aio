@@ -13,9 +13,9 @@ type AudioWriter struct {
 	filename   string          // Output filename.
 	video      string          // Video filename.
 	samplerate int             // Audio Sample Rate in Hz.
-	channels   int             // Number of audio channels. 1 = mono, 2 = stereo.
+	channels   int             // Number of audio channels.
 	bitrate    int             // Bitrate for audio encoding.
-	format     string          // Format of audio.
+	format     string          // Format of audio samples.
 	codec      string          // Codec used for video encoding.
 	pipe       *io.WriteCloser // Stdout pipe of ffmpeg process.
 	cmd        *exec.Cmd       // ffmpeg command.
@@ -39,7 +39,7 @@ func (writer *AudioWriter) Bitrate() int {
 }
 
 func (writer *AudioWriter) Format() string {
-	return writer.format
+	return writer.format[:len(writer.format)-2]
 }
 
 func (writer *AudioWriter) Codec() string {
@@ -78,12 +78,13 @@ func NewAudioWriter(filename string, options *Options) (*AudioWriter, error) {
 		writer.channels = options.Channels
 	}
 
-	writer.format = "s16le"
-	if options.Format != "" {
-		if err := checkFormat(options.Format); err != nil {
+	if options.Format == "" {
+		writer.format = fmt.Sprintf("s16%s", endianness())
+	} else {
+		writer.format = fmt.Sprintf("%s%s", options.Format, endianness())
+		if err := checkFormat(writer.format); err != nil {
 			return nil, err
 		}
-		writer.format = options.Format
 	}
 
 	if options.Video != "" {

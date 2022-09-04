@@ -15,8 +15,8 @@ import (
 type Microphone struct {
 	name       string         // Microphone device name.
 	samplerate int            // Audio Sample Rate in Hz.
-	channels   int            // Number of audio channels. 1 = mono, 2 = stereo.
-	format     string         // Format of audio.
+	channels   int            // Number of audio channels.
+	format     string         // Format of audio samples.
 	bps        int            // Bits per sample.
 	buffer     []byte         // Raw audio data.
 	pipe       *io.ReadCloser // Stdout pipe for ffmpeg process streaming microphone audio.
@@ -37,7 +37,7 @@ func (mic *Microphone) Channels() int {
 }
 
 func (mic *Microphone) Format() string {
-	return mic.format
+	return mic.format[:len(mic.format)-2]
 }
 
 func (mic *Microphone) BitsPerSample() int {
@@ -99,9 +99,15 @@ func NewMicrophone(stream int, options *Options) (*Microphone, error) {
 		options = &Options{}
 	}
 
-	mic.format = "s16le" // Default format.
-	if options.Format != "" {
-		mic.format = options.Format
+	mic.format = fmt.Sprintf("s16%s", endianness()) // Default format.
+	if options.Format == "" {
+		mic.format = fmt.Sprintf("s16%s", endianness())
+	} else {
+		mic.format = fmt.Sprintf("%s%s", options.Format, endianness())
+	}
+
+	if err := checkFormat(mic.format); err != nil {
+		return nil, err
 	}
 
 	if options.SampleRate != 0 {
@@ -110,10 +116,6 @@ func NewMicrophone(stream int, options *Options) (*Microphone, error) {
 
 	if options.Channels != 0 {
 		mic.channels = options.Channels
-	}
-
-	if err := checkFormat(mic.format); err != nil {
-		return nil, err
 	}
 
 	mic.bps = int(parse(regexp.MustCompile(`\d{1,2}`).FindString(mic.format))) // Bits per sample.

@@ -14,7 +14,7 @@ func assertEquals(actual, expected interface{}) {
 }
 
 func TestSamplesInt16(t *testing.T) {
-	audio, err := NewAudio("test/beach.mp3", &Options{Format: "u16le"})
+	audio, err := NewAudio("test/beach.mp3", &Options{Format: "u16"})
 	if err != nil {
 		panic(err)
 	}
@@ -41,7 +41,7 @@ func TestSamplesInt16(t *testing.T) {
 }
 
 func TestSamplesFloat64(t *testing.T) {
-	audio, err := NewAudio("test/beach.mp3", &Options{Format: "f64le"})
+	audio, err := NewAudio("test/beach.mp3", &Options{Format: "f64"})
 	if err != nil {
 		panic(err)
 	}
@@ -150,7 +150,7 @@ func TestAudioIO(t *testing.T) {
 	assertEquals(audio.Channels(), 2)
 	assertEquals(audio.Bitrate(), 128000)
 	assertEquals(audio.Duration(), 1.032)
-	assertEquals(audio.Format(), "s16le")
+	assertEquals(audio.Format(), "s16")
 	assertEquals(audio.Codec(), "mp3")
 	assertEquals(audio.BitsPerSample(), 16)
 	assertEquals(len(audio.Buffer()), 0)
@@ -207,7 +207,7 @@ func TestAudioPlayback(t *testing.T) {
 }
 
 func TestAudioCopying(t *testing.T) {
-	audio, err1 := NewAudio("test/beach.mp3", &Options{Format: "s16be"})
+	audio, err1 := NewAudio("test/beach.mp3", &Options{Format: "s16"})
 	if err1 != nil {
 		panic(err1)
 	}
@@ -239,7 +239,7 @@ func TestAudioResampling(t *testing.T) {
 	options := Options{
 		SampleRate: 4000,
 		Channels:   1,
-		Format:     "f32be",
+		Format:     "f32",
 	}
 	audio, err1 := NewAudio("test/beach.mp3", &options)
 	if err1 != nil {
@@ -252,7 +252,7 @@ func TestAudioResampling(t *testing.T) {
 	assertEquals(audio.Channels(), 1)
 	assertEquals(audio.Bitrate(), 128000)
 	assertEquals(audio.Duration(), 1.032)
-	assertEquals(audio.Format(), "f32be")
+	assertEquals(audio.Format(), "f32")
 	assertEquals(audio.Codec(), "mp3")
 	assertEquals(audio.BitsPerSample(), 32)
 	assertEquals(len(audio.Buffer()), 0)
@@ -322,7 +322,7 @@ func TestMicrophone(t *testing.T) {
 	}
 
 	seconds := 0
-	for mic.Read() && seconds < 10 {
+	for mic.Read() && seconds < 3 {
 		seconds++
 	}
 

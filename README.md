@@ -12,9 +12,9 @@ go get github.com/AlexEidt/aio
 
 ## Buffers
 
-`aio` uses `byte` buffers to transport raw audio data. Audio data can take on many forms, including floating point, unsigned integer and signed integer. These types may be larger than a `byte` and would have to be split. Learn more about [available audio types](https://trac.ffmpeg.org/wiki/audio%20types) from the FFmpeg Wiki. `alaw` and `mulaw` formats are currently not supported.
+`aio` uses `byte` buffers to transport raw audio data. Audio data can take on many forms, including floating point, unsigned integer and signed integer. These types may be larger than a `byte` and would have to be split. Valid formats are `u8`, `s8`, `u16`, `s16`, `u24`, `s24`, `u32`, `s32`, `f32`, and `f64`. These represent `u` unsigned integers, `s` signed integers and `f` floating point numbers.
 
-As an example, if there is stereo sound (two channels) encoded in the `s16le` (signed 16 bit integers, little endian) format with a sampling rate of `44100 Hz`, one second of audio would be
+As an example, if there is stereo sound (two channels) encoded in the `s16` (signed 16 bit integers) format with a sampling rate of `44100 Hz`, one second of audio would be
 
 ```
 44100 * 2 (channels) * 2 (bytes per sample) = 176400 bytes
@@ -47,9 +47,9 @@ sample rate * channels * bytes per sample
 
 which corresponds to 1 second of audio data.
 
-The user may pass in `options` to set the desired sampling rate, format and channels of the audio. If `options` is `nil`, then the channels and sampling rate from the file will be used, with a default format of `"s16le"`.
+The user may pass in `options` to set the desired sampling rate, format and channels of the audio. If `options` is `nil`, then the channels and sampling rate from the file will be used, with a default format of `s16`.
 
-Note that the `Samples()` function is only present for convenience. It casts the raw byte buffer into the given audio data type determined by the `Format()` such that the underlying data buffers are the same. The `s24le`, `s24be`, `u24le` and `s24be` formats are not supported by the `Samples()` function since there is no type equivalent. Calling the `Samples()` function on 24-bit audio will return the raw byte buffer.
+Note that the `Samples()` function is only present for convenience. It casts the raw byte buffer into the given audio data type determined by the `Format()` such that the underlying data buffers are the same. The `s24` and `u24` formats are not supported by the `Samples()` function since there is no type equivalent. Calling the `Samples()` function on 24-bit audio will return the raw byte buffer.
 
 The return value of the `Samples()` function will have to be cast into an array of the desired type (e.g. `audio.Samples().([]float32)`)
 
@@ -74,7 +74,7 @@ Close()
 
 ## `AudioWriter`
 
-`AudioWriter` is used to write audio to files from a buffer of audio samples. It comes with an `Options` struct that can be used to specify certain metadata of the output audio file. If `options` is `nil`, the defaults used are a sampling rate of `44100 Hz`, with `2` channels in the `"s16le"` format.
+`AudioWriter` is used to write audio to files from a buffer of audio samples. It comes with an `Options` struct that can be used to specify certain metadata of the output audio file. If `options` is `nil`, the defaults used are a sampling rate of `44100 Hz`, with `2` channels in the `s16` format.
 
 ```go
 aio.NewAudioWriter(filename string, options *aio.Options) (*aio.AudioWriter, error)
@@ -124,8 +124,11 @@ Close()
 `Player` is used to play audio from a buffer of audio samples.
 
 ```go
-aio.NewPlayer(channels, sampleRate int, format string) (*aio.Player, error)
+aio.NewPlayer(channels, samplerate int, format string) (*aio.Player, error)
 
+SampleRate() int
+Channels() int
+Format() string
 Play(samples interface{}) error
 Close()
 ```
@@ -161,7 +164,7 @@ for audio.Read() {
 Capture 10 seconds of audio from the microphone. Audio is recorded at 44100 Hz stereo and is in signed 16 bit format.
 
 ```go
-micOptions := aio.Options{Format: "s16le", Channels: 2, SampleRate: 44100}
+micOptions := aio.Options{Format: "s16", Channels: 2, SampleRate: 44100}
 mic, _ := aio.NewMicrophone(0, &micOptions)
 defer mic.Close()
 

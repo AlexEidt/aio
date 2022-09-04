@@ -13,10 +13,10 @@ import (
 type Audio struct {
 	filename   string         // Audio Filename.
 	samplerate int            // Audio Sample Rate in Hz.
-	channels   int            // Number of audio channels. 1 = mono, 2 = stereo.
+	channels   int            // Number of audio channels.
 	bitrate    int            // Bitrate for audio encoding.
 	duration   float64        // Duration of audio in seconds.
-	format     string         // Format of audio.
+	format     string         // Format of audio samples.
 	codec      string         // Codec used for video encoding.
 	bps        int            // Bits per sample.
 	buffer     []byte         // Raw audio data.
@@ -47,7 +47,7 @@ func (audio *Audio) Duration() float64 {
 }
 
 func (audio *Audio) Format() string {
-	return audio.format
+	return audio.format[:len(audio.format)-2]
 }
 
 func (audio *Audio) Codec() string {
@@ -104,9 +104,9 @@ func NewAudio(filename string, options *Options) (*Audio, error) {
 	}
 
 	if options.Format == "" {
-		audio.format = "s16le"
+		audio.format = fmt.Sprintf("s16%s", endianness())
 	} else {
-		audio.format = options.Format
+		audio.format = fmt.Sprintf("%s%s", options.Format, endianness())
 	}
 
 	if err := checkFormat(audio.format); err != nil {

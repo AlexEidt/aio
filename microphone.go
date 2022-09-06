@@ -69,7 +69,7 @@ func (mic *Microphone) SetBuffer(buffer []byte) error {
 
 func NewMicrophone(stream int, options *Options) (*Microphone, error) {
 	// Check if ffmpeg is installed on the users machine.
-	if err := checkExists("ffmpeg"); err != nil {
+	if err := installed("ffmpeg"); err != nil {
 		return nil, err
 	}
 

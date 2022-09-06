@@ -15,7 +15,7 @@ func Play(filename string) error {
 		return fmt.Errorf("file %s does not exist", filename)
 	}
 	// Check if ffplay is installed on the users machine.
-	if err := checkExists("ffplay"); err != nil {
+	if err := installed("ffplay"); err != nil {
 		return err
 	}
 
@@ -73,7 +73,7 @@ func (player *Player) Format() string {
 
 func NewPlayer(channels, samplerate int, format string) (*Player, error) {
 	// Check if ffplay is installed on the users machine.
-	if err := checkExists("ffplay"); err != nil {
+	if err := installed("ffplay"); err != nil {
 		return nil, err
 	}
 

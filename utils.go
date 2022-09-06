@@ -28,7 +28,7 @@ func exists(filename string) bool {
 }
 
 // Checks if the given program is installed.
-func checkExists(program string) error {
+func installed(program string) error {
 	cmd := exec.Command(program, "-version")
 	errmsg := fmt.Errorf("%s is not installed", program)
 	if err := cmd.Start(); err != nil {
@@ -76,13 +76,9 @@ func ffprobe(filename, stype string) (map[string]string, error) {
 		return nil, err
 	}
 
-	return parseFFprobe(buffer[:total]), nil
-}
-
-// Parse ffprobe output to fill in audio data.
-func parseFFprobe(input []byte) map[string]string {
+	// Parse ffprobe output to fill in audio data.
 	data := make(map[string]string)
-	for _, line := range strings.Split(string(input), "|") {
+	for _, line := range strings.Split(string(buffer[:total]), "|") {
 		if strings.Contains(line, "=") {
 			keyValue := strings.Split(line, "=")
 			if _, ok := data[keyValue[0]]; !ok {
@@ -90,7 +86,7 @@ func parseFFprobe(input []byte) map[string]string {
 			}
 		}
 	}
-	return data
+	return data, nil
 }
 
 // Parses the given data into a float64.

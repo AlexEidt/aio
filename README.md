@@ -58,7 +58,7 @@ The return value of the `Samples()` function will have to be cast into an array 
 
 ```go
 aio.NewAudio(filename string, options *aio.Options) (*aio.Audio, error)
-aio.NewAudioStreams(filename string, options *Options) ([]*aio.Audio, error)
+aio.NewAudioStreams(filename string, options *aio.Options) ([]*aio.Audio, error)
 
 FileName() string
 SampleRate() int

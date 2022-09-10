@@ -1,6 +1,7 @@
 package aio
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -41,7 +42,7 @@ func installed(program string) error {
 }
 
 // Runs ffprobe on the given file and returns a map of the metadata.
-func ffprobe(filename, stype string) (map[string]string, error) {
+func ffprobe(filename, stype string) ([]map[string]string, error) {
 	// "stype" is stream stype. "v" for video, "a" for audio.
 	// Extract media metadata information with ffprobe.
 	cmd := exec.Command(
@@ -61,32 +62,42 @@ func ffprobe(filename, stype string) (map[string]string, error) {
 	if err := cmd.Start(); err != nil {
 		return nil, err
 	}
+
 	// Read ffprobe output from Stdout.
-	buffer := make([]byte, 2<<10)
-	total := 0
+	builder := bytes.Buffer{}
+	buffer := make([]byte, 1024)
 	for {
-		n, err := pipe.Read(buffer[total:])
-		total += n
+		n, err := pipe.Read(buffer)
+		builder.Write(buffer[:n])
 		if err == io.EOF {
 			break
 		}
 	}
+
 	// Wait for ffprobe command to complete.
 	if err := cmd.Wait(); err != nil {
 		return nil, err
 	}
 
 	// Parse ffprobe output to fill in audio data.
-	data := make(map[string]string)
-	for _, line := range strings.Split(string(buffer[:total]), "|") {
-		if strings.Contains(line, "=") {
-			keyValue := strings.Split(line, "=")
-			if _, ok := data[keyValue[0]]; !ok {
-				data[keyValue[0]] = keyValue[1]
+	datalist := make([]map[string]string, 0)
+	metadata := string(builder.String())
+	for _, stream := range strings.Split(metadata, "\n") {
+		if len(strings.TrimSpace(stream)) > 0 {
+			data := make(map[string]string)
+			for _, line := range strings.Split(stream, "|") {
+				if strings.Contains(line, "=") {
+					keyValue := strings.Split(line, "=")
+					if _, ok := data[keyValue[0]]; !ok {
+						data[keyValue[0]] = keyValue[1]
+					}
+				}
 			}
+			datalist = append(datalist, data)
 		}
 	}
-	return data, nil
+
+	return datalist, nil
 }
 
 // Parses the given data into a float64.
@@ -114,12 +125,10 @@ func microphone() (string, error) {
 
 // For webcam streaming on windows, ffmpeg requires a device name.
 // All device names are parsed and returned by this function.
-func parseDevices(buffer []byte) []string {
-	bufferstr := string(buffer)
-
-	index := strings.Index(strings.ToLower(bufferstr), "directshow audio device")
+func parseDevices(buffer string) []string {
+	index := strings.Index(strings.ToLower(buffer), "directshow audio device")
 	if index != -1 {
-		bufferstr = bufferstr[index:]
+		buffer = buffer[index:]
 	}
 
 	type Pair struct {
@@ -132,7 +141,7 @@ func parseDevices(buffer []byte) []string {
 	pairs := []Pair{}
 	// Find all device names surrounded by quotes. E.g "Windows Camera Front"
 	regex := regexp.MustCompile("\"[^\"]+\"")
-	for _, line := range strings.Split(strings.ReplaceAll(bufferstr, "\r\n", "\n"), "\n") {
+	for _, line := range strings.Split(strings.ReplaceAll(buffer, "\r\n", "\n"), "\n") {
 		if strings.Contains(strings.ToLower(line), "alternative name") {
 			match := regex.FindString(line)
 			if len(match) > 0 {
@@ -195,18 +204,21 @@ func getDevicesWindows() ([]string, error) {
 	if err := cmd.Start(); err != nil {
 		return nil, err
 	}
+
 	// Read list devices from Stdout.
-	buffer := make([]byte, 2<<10)
-	total := 0
+	builder := bytes.Buffer{}
+	buffer := make([]byte, 1024)
 	for {
-		n, err := pipe.Read(buffer[total:])
-		total += n
+		n, err := pipe.Read(buffer)
+		builder.Write(buffer[:n])
 		if err == io.EOF {
 			break
 		}
 	}
+
 	cmd.Wait()
-	devices := parseDevices(buffer)
+
+	devices := parseDevices(builder.String())
 	return devices, nil
 }
 
@@ -231,7 +243,7 @@ func endianness() string {
 }
 
 // Alias the byte buffer as a certain type specified by the format string.
-func convertBytesToSamples(buffer []byte, size int, format string) interface{} {
+func bytesToSamples(buffer []byte, size int, format string) interface{} {
 	switch format {
 	case "f32be", "f32le":
 		var data []float32
@@ -287,7 +299,7 @@ func convertBytesToSamples(buffer []byte, size int, format string) interface{} {
 	}
 }
 
-func convertSamplesToBytes(data interface{}) []byte {
+func samplesToBytes(data interface{}) []byte {
 	var buffer []byte
 	pointer := (*reflect.SliceHeader)(unsafe.Pointer(&buffer))
 

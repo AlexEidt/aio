@@ -12,17 +12,19 @@ import (
 )
 
 type Audio struct {
-	filename   string         // Audio Filename.
-	samplerate int            // Audio Sample Rate in Hz.
-	channels   int            // Number of audio channels.
-	bitrate    int            // Bitrate for audio encoding.
-	duration   float64        // Duration of audio in seconds.
-	format     string         // Format of audio samples.
-	codec      string         // Codec used for video encoding.
-	bps        int            // Bits per sample.
-	buffer     []byte         // Raw audio data.
-	pipe       *io.ReadCloser // Stdout pipe for ffmpeg process.
-	cmd        *exec.Cmd      // ffmpeg command.
+	filename   string            // Audio Filename.
+	samplerate int               // Audio Sample Rate in Hz.
+	channels   int               // Number of audio channels.
+	bitrate    int               // Bitrate for audio encoding.
+	duration   float64           // Duration of audio in seconds.
+	format     string            // Format of audio samples.
+	codec      string            // Codec used for video encoding.
+	bps        int               // Bits per sample.
+	stream     int               // Stream Index.
+	buffer     []byte            // Raw audio data.
+	metadata   map[string]string // Audio Metadata.
+	pipe       *io.ReadCloser    // Stdout pipe for ffmpeg process.
+	cmd        *exec.Cmd         // ffmpeg command.
 }
 
 func (audio *Audio) FileName() string {
@@ -64,6 +66,11 @@ func (audio *Audio) BitsPerSample() int {
 	return audio.bps
 }
 
+// Returns the zero-indexed audio stream index.
+func (audio *Audio) Stream() int {
+	return audio.stream
+}
+
 // Returns the total number of audio samples in the file.
 func (audio *Audio) Total() int {
 	frame := audio.channels * audio.bps / 8
@@ -76,9 +83,14 @@ func (audio *Audio) Buffer() []byte {
 	return audio.buffer
 }
 
+// Raw Metadata from ffprobe output for the audio file.
+func (audio *Audio) MetaData() map[string]string {
+	return audio.metadata
+}
+
 // Casts the values in the byte buffer to those specified by the audio format.
 func (audio *Audio) Samples() interface{} {
-	return convertBytesToSamples(audio.buffer, len(audio.buffer)/(audio.bps/8), audio.format)
+	return bytesToSamples(audio.buffer, len(audio.buffer)/(audio.bps/8), audio.format)
 }
 
 // Sets the buffer to the given byte array. The length of the buffer must be a multiple
@@ -92,6 +104,24 @@ func (audio *Audio) SetBuffer(buffer []byte) error {
 }
 
 func NewAudio(filename string, options *Options) (*Audio, error) {
+	if options == nil {
+		options = &Options{}
+	}
+
+	streams, err := NewAudioStreams(filename, options)
+	if streams == nil {
+		return nil, err
+	}
+
+	if options.Stream < 0 || options.Stream >= len(streams) {
+		return nil, fmt.Errorf("invalid stream index: %d, must be between 0 and %d", options.Stream, len(streams))
+	}
+
+	return streams[options.Stream], err
+}
+
+// Read all audio streams from the given file.
+func NewAudioStreams(filename string, options *Options) ([]*Audio, error) {
 	if !exists(filename) {
 		return nil, fmt.Errorf("video file %s does not exist", filename)
 	}
@@ -112,36 +142,47 @@ func NewAudio(filename string, options *Options) (*Audio, error) {
 		return nil, fmt.Errorf("no audio data found in %s", filename)
 	}
 
-	audio := &Audio{filename: filename}
-
 	if options == nil {
 		options = &Options{}
 	}
 
+	var format string
 	if options.Format == "" {
-		audio.format = createFormat("s16") // s16 default format.
+		format = createFormat("s16") // s16 default format.
 	} else {
-		audio.format = createFormat(options.Format)
+		format = createFormat(options.Format)
 	}
 
-	if err := checkFormat(audio.format); err != nil {
+	if err := checkFormat(format); err != nil {
 		return nil, err
 	}
 
-	bps := int(parse(regexp.MustCompile(`\d{1,2}`).FindString(audio.format))) // Bits per sample.
-	audio.bps = bps
+	bps := int(parse(regexp.MustCompile(`\d{1,2}`).FindString(format))) // Bits per sample.
 
-	audio.addAudioData(audioData)
+	streams := make([]*Audio, len(audioData))
+	for i, data := range audioData {
+		audio := &Audio{
+			filename: filename,
+			format:   format,
+			bps:      bps,
+			stream:   i,
+			metadata: data,
+		}
 
-	if options.SampleRate != 0 {
-		audio.samplerate = options.SampleRate
+		audio.addAudioData(data)
+
+		if options.SampleRate != 0 {
+			audio.samplerate = options.SampleRate
+		}
+
+		if options.Channels != 0 {
+			audio.channels = options.Channels
+		}
+
+		streams[i] = audio
 	}
 
-	if options.Channels != 0 {
-		audio.channels = options.Channels
-	}
-
-	return audio, nil
+	return streams, nil
 }
 
 // Adds audio data to the Audio struct from the ffprobe output.
@@ -176,11 +217,13 @@ func (audio *Audio) init() error {
 		"-acodec", fmt.Sprintf("pcm_%s", audio.format),
 		"-ar", fmt.Sprintf("%d", audio.samplerate),
 		"-ac", fmt.Sprintf("%d", audio.channels),
+		"-map", fmt.Sprintf("0:a:%d", audio.stream),
 		"-loglevel", "quiet",
 		"-",
 	)
 
 	audio.cmd = cmd
+
 	pipe, err := cmd.StdoutPipe()
 	if err != nil {
 		return err
@@ -206,6 +249,7 @@ func (audio *Audio) Read() bool {
 			return false
 		}
 	}
+
 	total := 0
 	for total < len(audio.buffer) {
 		n, err := (*audio.pipe).Read(audio.buffer[total:])
@@ -215,6 +259,7 @@ func (audio *Audio) Read() bool {
 		}
 		total += n
 	}
+
 	return true
 }
 

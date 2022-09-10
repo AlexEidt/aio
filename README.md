@@ -28,6 +28,7 @@ The `Options` struct is used to specify optional parameters for Audio I/O.
 
 ```go
 type Options struct {
+	Stream     int    // Audio Stream Index to use.
 	SampleRate int    // Sample rate in Hz.
 	Channels   int    // Number of channels.
 	Bitrate    int    // Bitrate.
@@ -49,12 +50,15 @@ which corresponds to 1 second of audio data.
 
 The user may pass in `options` to set the desired sampling rate, format and channels of the audio. If `options` is `nil`, then the channels and sampling rate from the file will be used, with a default format of `s16`.
 
+The `Read()` function fills the internal byte buffer with the next batch of audio samples. Once the entire file has been read, `Read()` will return `false` and close the `Audio` struct.
+
 Note that the `Samples()` function is only present for convenience. It casts the raw byte buffer into the given audio data type determined by the `Format()` such that the underlying data buffers are the same. The `s24` and `u24` formats are not supported by the `Samples()` function since there is no type equivalent. Calling the `Samples()` function on 24-bit audio will return the raw byte buffer.
 
 The return value of the `Samples()` function will have to be cast into an array of the desired type (e.g. `audio.Samples().([]float32)`)
 
 ```go
 aio.NewAudio(filename string, options *aio.Options) (*aio.Audio, error)
+aio.NewAudioStreams(filename string, options *Options) ([]*aio.Audio, error)
 
 FileName() string
 SampleRate() int
@@ -64,8 +68,10 @@ Duration() float64
 Format() string
 Codec() string
 BitsPerSample() int
+Stream() int
 Total() int
 Buffer() []byte
+MetaData() map[string]string
 Samples() interface{}
 SetBuffer(buffer []byte) error
 
@@ -134,12 +140,6 @@ Play(samples interface{}) error
 Close()
 ```
 
-Additionally, files may be played directly using the `Play` function:
-
-```go
-aio.Play(filename string) error
-```
-
 ## Examples
 
 Copy `input.wav` to `output.mp3`.
@@ -185,15 +185,25 @@ for mic.Read() && seconds < 10 {
 }
 ```
 
+Play all audio tracks from `input.mp4` sequentially.
+
+```go
+streams, _ := aio.NewAudioStreams("input.mp4", nil)
+
+for _, stream := range streams {
+	player, _ := aio.NewPlayer(stream.Channels(), stream.SampleRate(), stream.Format())
+	for stream.Read() {
+		player.Play(stream.Buffer())
+	}
+	player.Close()
+}
+```
+
 Play `input.mp4`.
 
 ```go
 audio, _ := aio.NewAudio("input.mp4", nil)
-player, _ := aio.NewPlayer(
-	audio.Channels(),
-	audio.SampleRate(),
-	audio.Format(),
-)
+player, _ := aio.NewPlayer(audio.Channels(), audio.SampleRate(), audio.Format())
 defer player.Close()
 
 for audio.Read() {
@@ -242,11 +252,7 @@ Play Microphone audio. Use default microphone settings for recording.
 mic, _ := aio.NewMicrophone(0, nil)
 defer mic.Close()
 
-player, _ := aio.NewPlayer(
-	mic.Channels(),
-	mic.SampleRate(),
-	mic.Format(),
-)
+player, _ := aio.NewPlayer(mic.Channels(), mic.SampleRate(), mic.Format())
 defer player.Close()
 
 for mic.Read() {

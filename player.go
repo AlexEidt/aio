@@ -9,43 +9,6 @@ import (
 	"syscall"
 )
 
-// Play the audio from the given file.
-func Play(filename string) error {
-	if !exists(filename) {
-		return fmt.Errorf("file %s does not exist", filename)
-	}
-	// Check if ffplay is installed on the users machine.
-	if err := installed("ffplay"); err != nil {
-		return err
-	}
-
-	cmd := exec.Command(
-		"ffplay",
-		"-i", filename,
-		"-nodisp",
-		"-autoexit",
-		"-loglevel", "quiet",
-	)
-	if err := cmd.Start(); err != nil {
-		return err
-	}
-
-	// Stop ffplay process when user presses Ctrl+C.
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-c
-		if cmd != nil {
-			cmd.Process.Kill()
-		}
-		os.Exit(1)
-	}()
-
-	cmd.Wait()
-
-	return nil
-}
-
 type Player struct {
 	samplerate int             // Audio Sample Rate in Hz.
 	channels   int             // Number of audio channels.
@@ -115,7 +78,7 @@ func NewPlayer(channels, samplerate int, format string) (*Player, error) {
 }
 
 func (player *Player) Play(samples interface{}) error {
-	buffer := convertSamplesToBytes(samples)
+	buffer := samplesToBytes(samples)
 	if buffer == nil {
 		return fmt.Errorf("invalid sample data type")
 	}

@@ -1,6 +1,7 @@
 package aio
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -54,7 +55,7 @@ func (mic *Microphone) Buffer() []byte {
 }
 
 func (mic *Microphone) Samples() interface{} {
-	return convertBytesToSamples(mic.buffer, len(mic.buffer)/(mic.bps/8), mic.format)
+	return bytesToSamples(mic.buffer, len(mic.buffer)/(mic.bps/8), mic.format)
 }
 
 // Sets the buffer to the given byte array. The length of the buffer must be a multiple
@@ -128,25 +129,24 @@ func NewMicrophone(stream int, options *Options) (*Microphone, error) {
 }
 
 // Parses the microphone metadata from ffmpeg output.
-func (mic *Microphone) parseMicrophoneData(buffer []byte) {
-	bufferstr := string(buffer)
+func (mic *Microphone) parseMicrophoneData(buffer string) {
 	// Sample String: "Stream #0:0: Audio: pcm_s16le, 44100 Hz, stereo, s16, 1411 kb/s".
-	index := strings.Index(bufferstr, "Stream #")
+	index := strings.Index(buffer, "Stream #")
 	if index == -1 {
 		index++
 	}
-	bufferstr = bufferstr[index:]
+	buffer = buffer[index:]
 	// Sample rate.
 	regex := regexp.MustCompile(`\d+ Hz`)
-	match := regex.FindString(bufferstr)
+	match := regex.FindString(buffer)
 	if len(match) > 0 {
 		mic.samplerate = int(parse(match[:len(match)-len(" Hz")]))
 	}
 
 	mic.channels = 2 // stereo by default.
-	if strings.Contains(bufferstr, "stereo") {
+	if strings.Contains(buffer, "stereo") {
 		mic.channels = 2
-	} else if strings.Contains(bufferstr, "mono") {
+	} else if strings.Contains(buffer, "mono") {
 		mic.channels = 1
 	}
 }
@@ -175,11 +175,11 @@ func (mic *Microphone) getMicrophoneData(device string) error {
 		return err
 	}
 	// Read ffmpeg output from Stdout.
-	buffer := make([]byte, 2<<11)
-	total := 0
+	builder := bytes.Buffer{}
+	buffer := make([]byte, 1024)
 	for {
-		n, err := pipe.Read(buffer[total:])
-		total += n
+		n, err := pipe.Read(buffer)
+		builder.Write(buffer[:n])
 		if err == io.EOF {
 			break
 		}
@@ -187,7 +187,7 @@ func (mic *Microphone) getMicrophoneData(device string) error {
 	// Wait for the command to finish.
 	cmd.Wait()
 
-	mic.parseMicrophoneData(buffer[:total])
+	mic.parseMicrophoneData(builder.String())
 	return nil
 }
 

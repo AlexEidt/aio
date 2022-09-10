@@ -165,6 +165,7 @@ func TestAudioIO(t *testing.T) {
 	assertEquals(audio.Format(), "s16")
 	assertEquals(audio.Codec(), "mp3")
 	assertEquals(audio.BitsPerSample(), 16)
+	assertEquals(audio.Stream(), 0)
 	assertEquals(len(audio.Buffer()), 0)
 
 	fmt.Println("Audio File IO test passed")
@@ -278,7 +279,7 @@ func TestAudioResampling(t *testing.T) {
 func TestDeviceParsingWindows(t *testing.T) {
 	// Sample string taken from FFmpeg wiki:
 	data := parseDevices(
-		[]byte(`ffmpeg version N-45279-g6b86dd5... --enable-runtime-cpudetect
+		`ffmpeg version N-45279-g6b86dd5... --enable-runtime-cpudetect
   libavutil      51. 74.100 / 51. 74.100
   libavcodec     54. 65.100 / 54. 65.100
   libavformat    54. 31.100 / 54. 31.100
@@ -293,7 +294,6 @@ func TestDeviceParsingWindows(t *testing.T) {
 [dshow @ 03ACF580]  "Internal Microphone (Conexant 2"
 [dshow @ 03ACF580]  "virtual-audio-capturer"
 dummy: Immediate exit requested`,
-		),
 	)
 
 	assertEquals(data[0], "Internal Microphone (Conexant 2")

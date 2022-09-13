@@ -71,7 +71,7 @@ func (audio *Audio) Stream() int {
 	return audio.stream
 }
 
-// Returns the total number of audio samples in the file.
+// Returns the total number of audio samples in the file in bytes.
 func (audio *Audio) Total() int {
 	frame := audio.channels * audio.bps / 8
 	second := audio.samplerate * frame

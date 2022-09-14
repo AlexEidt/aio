@@ -21,6 +21,7 @@ type Audio struct {
 	codec      string            // Codec used for video encoding.
 	bps        int               // Bits per sample.
 	stream     int               // Stream Index.
+	ended      bool              // Flag storing whether Audio reading has ended.
 	buffer     []byte            // Raw audio data.
 	metadata   map[string]string // Audio Metadata.
 	pipe       *io.ReadCloser    // Stdout pipe for ffmpeg process.
@@ -229,6 +230,7 @@ func (audio *Audio) init() error {
 		return err
 	}
 	audio.pipe = &pipe
+
 	if err := cmd.Start(); err != nil {
 		return err
 	}
@@ -240,9 +242,13 @@ func (audio *Audio) init() error {
 	return nil
 }
 
-// Reads the next frame from of audio and stores it in the buffer.
-// If the last frame has been read, returns false, otherwise true.
+// Reads the next frame of audio and stores it in the buffer.
+// If the last audio frame has been read, returns false, otherwise true.
 func (audio *Audio) Read() bool {
+	if audio.ended {
+		return false
+	}
+
 	// If cmd is nil, video reading has not been initialized.
 	if audio.cmd == nil {
 		if err := audio.init(); err != nil {
@@ -253,11 +259,15 @@ func (audio *Audio) Read() bool {
 	total := 0
 	for total < len(audio.buffer) {
 		n, err := (*audio.pipe).Read(audio.buffer[total:])
-		if err == io.EOF {
-			audio.Close()
-			return false
-		}
 		total += n
+		if err == io.EOF {
+			// When the user reaches the end of the audio stream, the buffer will have to be shortened
+			// such that the audio stream is accurately represented.
+			// The rest of this sliced array is not garbage collected.
+			audio.buffer = audio.buffer[:total]
+			audio.Close()
+			break
+		}
 	}
 
 	return true
@@ -265,6 +275,7 @@ func (audio *Audio) Read() bool {
 
 // Closes the pipe and stops the ffmpeg process.
 func (audio *Audio) Close() {
+	audio.ended = true
 	if audio.pipe != nil {
 		(*audio.pipe).Close()
 	}

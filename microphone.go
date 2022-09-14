@@ -243,11 +243,13 @@ func (mic *Microphone) Read() bool {
 			return false
 		}
 	}
+
 	total := 0
 	for total < len(mic.buffer) {
 		n, _ := (*mic.pipe).Read(mic.buffer[total:])
 		total += n
 	}
+
 	return true
 }
 

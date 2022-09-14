@@ -182,7 +182,7 @@ func TestAudioBuffer(t *testing.T) {
 	// buffer[0:10] = [209 252 172 253 82 255 5 0 94 0]
 	buffer := audio.Buffer()
 
-	assertEquals(len(buffer), audio.SampleRate()*audio.Channels()*audio.BitsPerSample()/8)
+	assertEquals(len(buffer), 512)
 	assertEquals(buffer[0], byte(209))
 	assertEquals(buffer[1], byte(252))
 	assertEquals(buffer[2], byte(172))
@@ -212,6 +212,8 @@ func TestAudioPlayback(t *testing.T) {
 	}
 	defer player.Close()
 
+	audio.SetBuffer(make([]byte, audio.Total()*4))
+
 	for audio.Read() {
 		player.Play(audio.Buffer())
 	}
@@ -236,11 +238,9 @@ func TestAudioCopying(t *testing.T) {
 		panic(err2)
 	}
 
-	data := make([]int16, audio.SampleRate()*audio.Channels()*audio.BitsPerSample()/8/2)
 	for audio.Read() {
 		samples := audio.Samples().([]int16)
-		copy(data, samples)
-		writer.Write(data)
+		writer.Write(samples)
 	}
 
 	defer writer.Close()

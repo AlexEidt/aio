@@ -31,13 +31,11 @@ func exists(filename string) bool {
 // Checks if the given program is installed.
 func installed(program string) error {
 	cmd := exec.Command(program, "-version")
-	errmsg := fmt.Errorf("%s is not installed", program)
-	if err := cmd.Start(); err != nil {
-		return errmsg
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("%s is not installed", program)
 	}
-	if err := cmd.Wait(); err != nil {
-		return errmsg
-	}
+
 	return nil
 }
 
@@ -164,6 +162,7 @@ func parseDevices(buffer string) []string {
 			devices = append(devices, pair.name)
 		}
 	}
+
 	return devices
 }
 
@@ -174,16 +173,6 @@ func contains(list []string, item string) bool {
 		}
 	}
 	return false
-}
-
-// Check audio format string.
-func checkFormat(format string) error {
-	match := regexp.MustCompile(`^(([us]8)|([us]((16)|(24)|(32))[bl]e)|(f((32)|(64))[bl]e))$`)
-	if len(match.FindString(format)) == 0 {
-		formats := "u8, s8, u16, s16, u24, s24, u32, s32, f32, or f64"
-		return fmt.Errorf("audio format %s is not supported, must be one of %s", format[:len(format)-2], formats)
-	}
-	return nil
 }
 
 // Returns the microphone device name.
@@ -197,10 +186,13 @@ func getDevicesWindows() ([]string, error) {
 		"-f", "dshow",
 		"-i", "dummy",
 	)
+
 	pipe, err := cmd.StderrPipe()
 	if err != nil {
 		return nil, err
 	}
+
+	// Start the command and immediately continue so that the pipe can be read.
 	if err := cmd.Start(); err != nil {
 		return nil, err
 	}
@@ -216,10 +208,21 @@ func getDevicesWindows() ([]string, error) {
 		}
 	}
 
+	// Wait for the command to finish.
 	cmd.Wait()
 
 	devices := parseDevices(builder.String())
 	return devices, nil
+}
+
+// Check audio format string.
+func checkFormat(format string) error {
+	match := regexp.MustCompile(`^(([us]8)|([us]((16)|(24)|(32))[bl]e)|(f((32)|(64))[bl]e))$`)
+	if len(match.FindString(format)) == 0 {
+		formats := "u8, s8, u16, s16, u24, s24, u32, s32, f32, or f64"
+		return fmt.Errorf("audio format %s is not supported, must be one of %s", format[:len(format)-2], formats)
+	}
+	return nil
 }
 
 func createFormat(format string) string {

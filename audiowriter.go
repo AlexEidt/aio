@@ -178,6 +178,7 @@ func (writer *AudioWriter) Write(samples interface{}) error {
 			return err
 		}
 	}
+
 	total := 0
 	for total < len(buffer) {
 		n, err := (*writer.pipe).Write(buffer[total:])
@@ -186,6 +187,7 @@ func (writer *AudioWriter) Write(samples interface{}) error {
 		}
 		total += n
 	}
+
 	return nil
 }
 

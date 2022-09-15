@@ -166,6 +166,7 @@ func TestAudioIO(t *testing.T) {
 	assertEquals(audio.Codec(), "mp3")
 	assertEquals(audio.BitsPerSample(), 16)
 	assertEquals(audio.Stream(), 0)
+	assertEquals(audio.HasStreams(), false)
 	assertEquals(len(audio.Buffer()), 0)
 
 	fmt.Println("Audio File IO test passed")

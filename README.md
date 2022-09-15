@@ -34,11 +34,11 @@ type Options struct {
 	Bitrate    int    // Bitrate.
 	Format     string // Format of audio.
 	Codec      string // Audio Codec.
-	Video      string // File path for Video to use.
+	StreamFile string // File path for extra stream data.
 }
 ```
 
-The `Options.Video` parameter is intended for users who wish to alter an audio stream from a video. Instead of having to process the audio and store in a file and then combine with the video later, the user can simply pass in the original video file path via the `Options.Video` parameter. This will combine the audio with all other streams in the given video file (Video, Subtitle, Data, and Attachments Streams) and will cut all streams to be the same length. **Note that `aio` is not a audio/video editing library.**
+The `Options.StreamFile` parameter is intended for users who wish to alter an audio stream from a video. Instead of having to process the audio and store in a file and then combine with the video later, the user can simply pass in the original video file path via the `Options.StreamFile` parameter. This will combine the audio with all other streams in the given video file (Video, Subtitle, Data, and Attachments Streams) and will cut all streams to be the same length. **Note that `aio` is not a audio/video editing library.**
 
 Note that this means that adding extra stream data from a file will only work if the `filename` being written to is a container format, i.e attempting to add video streams to a `wav` file will result in a undefined behavior.
 
@@ -74,7 +74,7 @@ Total() int
 Duration() float64
 Format() string
 Codec() string
-HasVideo() bool
+HasStreams() bool
 Buffer() []byte
 MetaData() map[string]string
 Samples() interface{}
@@ -92,7 +92,7 @@ Close()
 aio.NewAudioWriter(filename string, options *aio.Options) (*aio.AudioWriter, error)
 
 FileName() string
-Video() string
+StreamFile() string
 SampleRate() int
 Channels() int
 Bitrate() int
@@ -240,7 +240,7 @@ options := aio.Options{
 	Bitrate:    audio.Bitrate(),
 	Format:     audio.Format(),
 	Codec:      "aac",
-	Video:      "movie.mov",
+	StreamFile: "movie.mov",
 }
 
 writer, _ := aio.NewAudioWriter("output.mp4", &options)

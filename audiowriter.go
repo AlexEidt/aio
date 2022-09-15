@@ -11,7 +11,7 @@ import (
 
 type AudioWriter struct {
 	filename   string          // Output filename.
-	video      string          // Extra stream data filename.
+	streamfile string          // Extra stream data filename.
 	samplerate int             // Audio Sample Rate in Hz.
 	channels   int             // Number of audio channels.
 	bitrate    int             // Bitrate for audio encoding.
@@ -26,8 +26,8 @@ func (writer *AudioWriter) FileName() string {
 }
 
 // File used to fill in extra stream data.
-func (writer *AudioWriter) Video() string {
-	return writer.video
+func (writer *AudioWriter) StreamFile() string {
+	return writer.streamfile
 }
 
 // Audio Sample Rate in Hz.
@@ -67,10 +67,10 @@ func NewAudioWriter(filename string, options *Options) (*AudioWriter, error) {
 	}
 
 	writer := &AudioWriter{
-		filename: filename,
-		video:    options.Video,
-		bitrate:  options.Bitrate,
-		codec:    options.Codec,
+		filename:   filename,
+		streamfile: options.StreamFile,
+		bitrate:    options.Bitrate,
+		codec:      options.Codec,
 	}
 
 	writer.samplerate = 44100 // 44100 Hz sampling rate by default.
@@ -92,11 +92,11 @@ func NewAudioWriter(filename string, options *Options) (*AudioWriter, error) {
 		}
 	}
 
-	if options.Video != "" {
-		if !exists(options.Video) {
-			return nil, fmt.Errorf("file %s does not exist", options.Video)
+	if options.StreamFile != "" {
+		if !exists(options.StreamFile) {
+			return nil, fmt.Errorf("file %s does not exist", options.StreamFile)
 		}
-		writer.video = options.Video
+		writer.streamfile = options.StreamFile
 	}
 
 	return writer, nil
@@ -119,10 +119,10 @@ func (writer *AudioWriter) init() error {
 	}
 
 	// Assumes "writer.file" is a container format.
-	if writer.video != "" {
+	if writer.streamfile != "" {
 		command = append(
 			command,
-			"-i", writer.video,
+			"-i", writer.streamfile,
 			"-map", "0:a:0",
 			"-map", "1:v?", // Add Video streams if present.
 			"-c:v", "copy",

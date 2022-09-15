@@ -22,7 +22,7 @@ type Audio struct {
 	format     string            // Format of audio samples.
 	codec      string            // Codec used for video encoding.
 	ended      bool              // Flag storing whether Audio reading has ended.
-	hasvideo   bool              // Flag storing whether file contains Video.
+	hasstreams bool              // Flag storing whether file has additional data streams.
 	buffer     []byte            // Raw audio data.
 	metadata   map[string]string // Audio Metadata.
 	pipe       *io.ReadCloser    // Stdout pipe for ffmpeg process.
@@ -81,8 +81,9 @@ func (audio *Audio) Codec() string {
 	return audio.codec
 }
 
-func (audio *Audio) HasVideo() bool {
-	return audio.hasvideo
+// Returns true if file has any video, subtitle, data or attachment streams.
+func (audio *Audio) HasStreams() bool {
+	return audio.hasstreams
 }
 
 func (audio *Audio) Buffer() []byte {
@@ -165,20 +166,28 @@ func NewAudioStreams(filename string, options *Options) ([]*Audio, error) {
 
 	bps := int(parse(regexp.MustCompile(`\d{1,2}`).FindString(format))) // Bits per sample.
 
-	videoData, err := ffprobe(filename, "v")
-	if err != nil {
-		return nil, err
+	// Loop over all stream types. v: Video, s: Subtitle, d: Data, t: Attachments
+	hasstream := false
+	for _, c := range "vsdt" {
+		data, err := ffprobe(filename, string(c))
+		if err != nil {
+			return nil, err
+		}
+		if len(data) > 0 {
+			hasstream = true
+			break
+		}
 	}
 
 	streams := make([]*Audio, len(audioData))
 	for i, data := range audioData {
 		audio := &Audio{
-			filename: filename,
-			format:   format,
-			bps:      bps,
-			stream:   i,
-			hasvideo: len(videoData) > 0,
-			metadata: data,
+			filename:   filename,
+			format:     format,
+			bps:        bps,
+			stream:     i,
+			hasstreams: hasstream,
+			metadata:   data,
 		}
 
 		audio.addAudioData(data)

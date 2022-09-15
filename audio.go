@@ -81,7 +81,7 @@ func (audio *Audio) Codec() string {
 	return audio.codec
 }
 
-func (audio *Audio) HasAudio() bool {
+func (audio *Audio) HasVideo() bool {
 	return audio.hasvideo
 }
 

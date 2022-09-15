@@ -37,6 +37,10 @@ func (mic *Microphone) Channels() int {
 	return mic.channels
 }
 
+func (mic *Microphone) BitsPerSample() int {
+	return mic.bps
+}
+
 func (mic *Microphone) Format() string {
 	switch mic.format {
 	case "u8", "s8":
@@ -44,10 +48,6 @@ func (mic *Microphone) Format() string {
 	default:
 		return mic.format[:len(mic.format)-2]
 	}
-}
-
-func (mic *Microphone) BitsPerSample() int {
-	return mic.bps
 }
 
 func (mic *Microphone) Buffer() []byte {

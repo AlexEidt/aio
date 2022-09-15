@@ -34,9 +34,13 @@ type Options struct {
 	Bitrate    int    // Bitrate.
 	Format     string // Format of audio.
 	Codec      string // Audio Codec.
-	Video      string // Video file to use.
+	Video      string // File path for Video to use.
 }
 ```
+
+The `Options.Video` parameter is intended for users who wish to alter an audio stream from a video. Instead of having to process the audio and store in a file and then combine with the video later, the user can simply pass in the original video file path via the `Options.Video` parameter. This will combine the audio with all other streams in the given video file (Video, Subtitle, Data, and Attachments Streams) and will cut all streams to be the same length. **Note that `aio` is not a audio/video editing library.**
+
+Note that this means that adding extra stream data from a file will only work if the `filename` being written to is a container format, i.e attempting to add video streams to a `wav` file will result in a undefined behavior.
 
 ## `Audio`
 
@@ -64,12 +68,13 @@ FileName() string
 SampleRate() int
 Channels() int
 Bitrate() int
-Duration() float64
-Format() string
-Codec() string
 BitsPerSample() int
 Stream() int
 Total() int
+Duration() float64
+Format() string
+Codec() string
+HasVideo() bool
 Buffer() []byte
 MetaData() map[string]string
 Samples() interface{}
@@ -87,12 +92,12 @@ Close()
 aio.NewAudioWriter(filename string, options *aio.Options) (*aio.AudioWriter, error)
 
 FileName() string
+Video() string
 SampleRate() int
 Channels() int
 Bitrate() int
 Format() string
 Codec() string
-Video() string
 
 Write(samples interface{}) error
 Close()
@@ -116,8 +121,8 @@ aio.NewMicrophone(stream int, options *aio.Options) (*aio.Microphone, error)
 Name() string
 SampleRate() int
 Channels() int
-Format() string
 BitsPerSample() int
+Format() string
 Buffer() []byte
 Samples() interface{}
 SetBuffer(buffer []byte) error
@@ -224,7 +229,7 @@ for audio.Read() {
 }
 ```
 
-Combine `sound.wav` and `movie.mp4` into `output.mp4`.
+Combine `sound.wav` and `movie.mov` into `output.mp4`.
 
 ```go
 audio, _ := aio.NewAudio("sound.wav", nil)
@@ -234,8 +239,8 @@ options := aio.Options{
 	Channels:   audio.Channels(),
 	Bitrate:    audio.Bitrate(),
 	Format:     audio.Format(),
-	Codec:      audio.Codec(),
-	Video:      "movie.mp4",
+	Codec:      "aac",
+	Video:      "movie.mov",
 }
 
 writer, _ := aio.NewAudioWriter("output.mp4", &options)

@@ -11,7 +11,7 @@ import (
 
 type AudioWriter struct {
 	filename   string          // Output filename.
-	video      string          // Video filename.
+	video      string          // Extra stream data filename.
 	samplerate int             // Audio Sample Rate in Hz.
 	channels   int             // Number of audio channels.
 	bitrate    int             // Bitrate for audio encoding.
@@ -23,6 +23,11 @@ type AudioWriter struct {
 
 func (writer *AudioWriter) FileName() string {
 	return writer.filename
+}
+
+// File used to fill in extra stream data.
+func (writer *AudioWriter) Video() string {
+	return writer.video
 }
 
 // Audio Sample Rate in Hz.
@@ -51,11 +56,6 @@ func (writer *AudioWriter) Codec() string {
 	return writer.codec
 }
 
-// Video file name being written along with the audio.
-func (writer *AudioWriter) Video() string {
-	return writer.video
-}
-
 func NewAudioWriter(filename string, options *Options) (*AudioWriter, error) {
 	// Check if ffmpeg is installed on the users machine.
 	if err := installed("ffmpeg"); err != nil {
@@ -68,8 +68,8 @@ func NewAudioWriter(filename string, options *Options) (*AudioWriter, error) {
 
 	writer := &AudioWriter{
 		filename: filename,
-		bitrate:  options.Bitrate,
 		video:    options.Video,
+		bitrate:  options.Bitrate,
 		codec:    options.Codec,
 	}
 
@@ -94,16 +94,8 @@ func NewAudioWriter(filename string, options *Options) (*AudioWriter, error) {
 
 	if options.Video != "" {
 		if !exists(options.Video) {
-			return nil, fmt.Errorf("video file %s does not exist", options.Video)
+			return nil, fmt.Errorf("file %s does not exist", options.Video)
 		}
-
-		videoData, err := ffprobe(options.Video, "v")
-		if err != nil {
-			return nil, err
-		} else if len(videoData) == 0 {
-			return nil, fmt.Errorf("given video file %s has no video", options.Video)
-		}
-
 		writer.video = options.Video
 	}
 
@@ -126,16 +118,22 @@ func (writer *AudioWriter) init() error {
 		"-i", "-", // The input comes from stdin.
 	}
 
-	// Parameter logic from:
-	// https://github.com/Zulko/moviepy/blob/18e9f57d1abbae8051b9aef75de3f19b4d1f0630/moviepy/audio/io/ffmpeg_audiowriter.py
+	// Assumes "writer.file" is a container format.
 	if writer.video != "" {
 		command = append(
 			command,
 			"-i", writer.video,
-			"-vcodec", "copy",
+			"-map", "0:a:0",
+			"-map", "1:v?", // Add Video streams if present.
+			"-c:v", "copy",
+			"-map", "1:s?", // Add Subtitle streams if present.
+			"-c:s", "copy",
+			"-map", "1:d?", // Add Data streams if present.
+			"-c:d", "copy",
+			"-map", "1:t?", // Add Attachments streams if present.
+			"-c:t", "copy",
+			"-shortest", // Cut longest streams to match audio duration.
 		)
-	} else {
-		command = append(command, "-vn")
 	}
 
 	if writer.codec != "" {
@@ -157,6 +155,7 @@ func (writer *AudioWriter) init() error {
 	if err != nil {
 		return err
 	}
+
 	writer.pipe = &pipe
 	if err := cmd.Start(); err != nil {
 		return err

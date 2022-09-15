@@ -16,12 +16,13 @@ type Audio struct {
 	samplerate int               // Audio Sample Rate in Hz.
 	channels   int               // Number of audio channels.
 	bitrate    int               // Bitrate for audio encoding.
+	bps        int               // Bits per sample.
+	stream     int               // Stream Index.
 	duration   float64           // Duration of audio in seconds.
 	format     string            // Format of audio samples.
 	codec      string            // Codec used for video encoding.
-	bps        int               // Bits per sample.
-	stream     int               // Stream Index.
 	ended      bool              // Flag storing whether Audio reading has ended.
+	hasvideo   bool              // Flag storing whether file contains Video.
 	buffer     []byte            // Raw audio data.
 	metadata   map[string]string // Audio Metadata.
 	pipe       *io.ReadCloser    // Stdout pipe for ffmpeg process.
@@ -45,6 +46,23 @@ func (audio *Audio) Bitrate() int {
 	return audio.bitrate
 }
 
+func (audio *Audio) BitsPerSample() int {
+	return audio.bps
+}
+
+// Returns the zero-indexed audio stream index.
+func (audio *Audio) Stream() int {
+	return audio.stream
+}
+
+// Returns the total number of audio samples in the file in bytes.
+func (audio *Audio) Total() int {
+	frame := audio.channels * audio.bps / 8
+	second := audio.samplerate * frame
+	total := int(math.Ceil(float64(second) * audio.duration))
+	return total + (frame-total%frame)%frame
+}
+
 // Audio Duration in seconds.
 func (audio *Audio) Duration() float64 {
 	return audio.duration
@@ -63,21 +81,8 @@ func (audio *Audio) Codec() string {
 	return audio.codec
 }
 
-func (audio *Audio) BitsPerSample() int {
-	return audio.bps
-}
-
-// Returns the zero-indexed audio stream index.
-func (audio *Audio) Stream() int {
-	return audio.stream
-}
-
-// Returns the total number of audio samples in the file in bytes.
-func (audio *Audio) Total() int {
-	frame := audio.channels * audio.bps / 8
-	second := audio.samplerate * frame
-	total := int(math.Ceil(float64(second) * audio.duration))
-	return total + (frame-total%frame)%frame
+func (audio *Audio) HasAudio() bool {
+	return audio.hasvideo
 }
 
 func (audio *Audio) Buffer() []byte {
@@ -160,6 +165,11 @@ func NewAudioStreams(filename string, options *Options) ([]*Audio, error) {
 
 	bps := int(parse(regexp.MustCompile(`\d{1,2}`).FindString(format))) // Bits per sample.
 
+	videoData, err := ffprobe(filename, "v")
+	if err != nil {
+		return nil, err
+	}
+
 	streams := make([]*Audio, len(audioData))
 	for i, data := range audioData {
 		audio := &Audio{
@@ -167,6 +177,7 @@ func NewAudioStreams(filename string, options *Options) ([]*Audio, error) {
 			format:   format,
 			bps:      bps,
 			stream:   i,
+			hasvideo: len(videoData) > 0,
 			metadata: data,
 		}
 

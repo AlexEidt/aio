@@ -7,5 +7,5 @@ type Options struct {
 	Bitrate    int    // Bitrate.
 	Format     string // Format of audio.
 	Codec      string // Audio Codec.
-	Video      string // Video file to use.
+	Video      string // File path for Video to use.
 }

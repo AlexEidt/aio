@@ -235,7 +235,6 @@ func (audio *Audio) init() error {
 		"ffmpeg",
 		"-i", audio.filename,
 		"-f", audio.format,
-		"-acodec", fmt.Sprintf("pcm_%s", audio.format),
 		"-ar", fmt.Sprintf("%d", audio.samplerate),
 		"-ac", fmt.Sprintf("%d", audio.channels),
 		"-map", fmt.Sprintf("0:a:%d", audio.stream),

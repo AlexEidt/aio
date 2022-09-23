@@ -210,7 +210,6 @@ func (mic *Microphone) init() error {
 		"-f", micDeviceName,
 		"-i", mic.name,
 		"-f", mic.format,
-		"-acodec", fmt.Sprintf("pcm_%s", mic.format),
 		"-ar", fmt.Sprintf("%d", mic.samplerate),
 		"-ac", fmt.Sprintf("%d", mic.channels),
 		"-",

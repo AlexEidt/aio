@@ -112,7 +112,6 @@ func (writer *AudioWriter) init() error {
 		"-y", // overwrite output file if it exists.
 		"-loglevel", "quiet",
 		"-f", writer.format,
-		"-acodec", fmt.Sprintf("pcm_%s", writer.format),
 		"-ar", fmt.Sprintf("%d", writer.samplerate),
 		"-ac", fmt.Sprintf("%d", writer.channels),
 		"-i", "-", // The input comes from stdin.

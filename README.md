@@ -40,7 +40,7 @@ type Options struct {
 
 The `Options.StreamFile` parameter is intended for users who wish to alter an audio stream from a video. Instead of having to process the audio and store in a file and then combine with the video later, the user can simply pass in the original video file path via the `Options.StreamFile` parameter. This will combine the audio with all other streams in the given video file (Video, Subtitle, Data, and Attachments Streams) and will cut all streams to be the same length. **Note that `aio` is not a audio/video editing library.**
 
-This means that adding extra stream data from a file will only work if the `filename` being written to is a container format, i.e attempting to add video streams to a `wav` file will result in a undefined behavior.
+This means that adding extra stream data from a file will only work if the `filename` being written to is a container format, i.e attempting to add video streams to a `wav` file will result in undefined behavior.
 
 ## `Audio`
 

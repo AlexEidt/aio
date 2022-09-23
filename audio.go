@@ -42,6 +42,7 @@ func (audio *Audio) Channels() int {
 	return audio.channels
 }
 
+// Audio Bitrate in bits/s.
 func (audio *Audio) Bitrate() int {
 	return audio.bitrate
 }

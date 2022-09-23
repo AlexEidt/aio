@@ -39,6 +39,7 @@ func (writer *AudioWriter) Channels() int {
 	return writer.channels
 }
 
+// Audio Bitrate in bits/s.
 func (writer *AudioWriter) Bitrate() int {
 	return writer.bitrate
 }

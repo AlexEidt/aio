@@ -137,10 +137,7 @@ func (writer *AudioWriter) init() error {
 	}
 
 	if writer.codec != "" {
-		command = append(
-			command,
-			"-acodec", writer.codec,
-		)
+		command = append(command, "-acodec", writer.codec)
 	}
 
 	if writer.bitrate > 0 {

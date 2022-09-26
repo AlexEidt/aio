@@ -60,9 +60,9 @@ func NewPlayer(channels, samplerate int, format string) (*Player, error) {
 		samplerate: samplerate,
 		channels:   channels,
 		format:     format,
+		cmd:        cmd,
 	}
 
-	player.cmd = cmd
 	pipe, err := cmd.StdinPipe()
 	if err != nil {
 		return nil, err

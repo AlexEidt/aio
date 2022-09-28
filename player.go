@@ -68,6 +68,8 @@ func (player *Player) init() error {
 		"-loglevel", "quiet",
 	)
 
+	player.cmd = cmd
+
 	pipe, err := cmd.StdinPipe()
 	if err != nil {
 		return err

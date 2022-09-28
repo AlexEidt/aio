@@ -45,43 +45,53 @@ func NewPlayer(channels, samplerate int, format string) (*Player, error) {
 		return nil, err
 	}
 
+	player := &Player{
+		samplerate: samplerate,
+		channels:   channels,
+		format:     format,
+	}
+
+	return player, nil
+}
+
+func (player *Player) init() error {
+	player.cleanup()
+
 	cmd := exec.Command(
 		"ffplay",
-		"-f", format,
-		"-ac", fmt.Sprintf("%d", channels),
-		"-ar", fmt.Sprintf("%d", samplerate),
+		"-f", player.format,
+		"-ac", fmt.Sprintf("%d", player.channels),
+		"-ar", fmt.Sprintf("%d", player.samplerate),
 		"-i", "-",
 		"-nodisp",
 		"-autoexit",
 		"-loglevel", "quiet",
 	)
 
-	player := &Player{
-		samplerate: samplerate,
-		channels:   channels,
-		format:     format,
-		cmd:        cmd,
-	}
-
 	pipe, err := cmd.StdinPipe()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	player.pipe = &pipe
 
 	if err := cmd.Start(); err != nil {
-		return nil, err
+		return err
 	}
 
-	player.cleanup()
-
-	return player, nil
+	return nil
 }
 
 func (player *Player) Play(samples interface{}) error {
 	buffer := samplesToBytes(samples)
 	if buffer == nil {
 		return fmt.Errorf("invalid sample data type")
+	}
+
+	// If cmd is nil, audio player has not been initialized.
+	if player.cmd == nil {
+		if err := player.init(); err != nil {
+			return err
+		}
 	}
 
 	total := 0

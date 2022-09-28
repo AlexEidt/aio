@@ -269,7 +269,7 @@ func (audio *Audio) Read() bool {
 		return false
 	}
 
-	// If cmd is nil, video reading has not been initialized.
+	// If cmd is nil, audio reading has not been initialized.
 	if audio.cmd == nil {
 		if err := audio.init(); err != nil {
 			return false

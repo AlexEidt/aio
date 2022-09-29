@@ -55,8 +55,9 @@ func NewPlayer(channels, samplerate int, format string) (*Player, error) {
 }
 
 func (player *Player) init() error {
+	// If user exits with Ctrl+C, stop ffplay process.
 	player.cleanup()
-
+	// ffplay command to plat an audio stream. Takes in bytes from Stdin.
 	cmd := exec.Command(
 		"ffplay",
 		"-f", player.format,

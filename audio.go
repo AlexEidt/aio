@@ -290,7 +290,7 @@ func (audio *Audio) Read() bool {
 		}
 	}
 
-	return true
+	return total > 0
 }
 
 // Closes the pipe and stops the ffmpeg process.

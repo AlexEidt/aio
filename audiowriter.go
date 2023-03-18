@@ -10,15 +10,15 @@ import (
 )
 
 type AudioWriter struct {
-	filename   string          // Output filename.
-	streamfile string          // Extra stream data filename.
-	samplerate int             // Audio Sample Rate in Hz.
-	channels   int             // Number of audio channels.
-	bitrate    int             // Bitrate for audio encoding.
-	format     string          // Format of audio samples.
-	codec      string          // Codec used for video encoding.
-	pipe       *io.WriteCloser // Stdout pipe of ffmpeg process.
-	cmd        *exec.Cmd       // ffmpeg command.
+	filename   string         // Output filename.
+	streamfile string         // Extra stream data filename.
+	samplerate int            // Audio Sample Rate in Hz.
+	channels   int            // Number of audio channels.
+	bitrate    int            // Bitrate for audio encoding.
+	format     string         // Format of audio samples.
+	codec      string         // Codec used for video encoding.
+	pipe       io.WriteCloser // Stdout pipe of ffmpeg process.
+	cmd        *exec.Cmd      // ffmpeg command.
 }
 
 func (writer *AudioWriter) FileName() string {
@@ -153,7 +153,7 @@ func (writer *AudioWriter) init() error {
 		return err
 	}
 
-	writer.pipe = &pipe
+	writer.pipe = pipe
 	if err := cmd.Start(); err != nil {
 		return err
 	}
@@ -177,7 +177,7 @@ func (writer *AudioWriter) Write(samples interface{}) error {
 
 	total := 0
 	for total < len(buffer) {
-		n, err := (*writer.pipe).Write(buffer[total:])
+		n, err := writer.pipe.Write(buffer[total:])
 		if err != nil {
 			return err
 		}
@@ -190,7 +190,7 @@ func (writer *AudioWriter) Write(samples interface{}) error {
 // Closes the pipe and stops the ffmpeg process.
 func (writer *AudioWriter) Close() {
 	if writer.pipe != nil {
-		(*writer.pipe).Close()
+		writer.pipe.Close()
 	}
 	if writer.cmd != nil {
 		writer.cmd.Wait()
@@ -205,7 +205,7 @@ func (writer *AudioWriter) cleanup() {
 	go func() {
 		<-c
 		if writer.pipe != nil {
-			(*writer.pipe).Close()
+			writer.pipe.Close()
 		}
 		if writer.cmd != nil {
 			writer.cmd.Process.Kill()

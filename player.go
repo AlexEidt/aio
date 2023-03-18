@@ -10,11 +10,11 @@ import (
 )
 
 type Player struct {
-	samplerate int             // Audio Sample Rate in Hz.
-	channels   int             // Number of audio channels.
-	format     string          // Format of audio samples.
-	pipe       *io.WriteCloser // Stdin pipe for ffplay process.
-	cmd        *exec.Cmd       // ffplay command.
+	samplerate int            // Audio Sample Rate in Hz.
+	channels   int            // Number of audio channels.
+	format     string         // Format of audio samples.
+	pipe       io.WriteCloser // Stdin pipe for ffplay process.
+	cmd        *exec.Cmd      // ffplay command.
 }
 
 func (player *Player) SampleRate() int {
@@ -75,7 +75,7 @@ func (player *Player) init() error {
 	if err != nil {
 		return err
 	}
-	player.pipe = &pipe
+	player.pipe = pipe
 
 	if err := cmd.Start(); err != nil {
 		return err
@@ -99,7 +99,7 @@ func (player *Player) Play(samples interface{}) error {
 
 	total := 0
 	for total < len(buffer) {
-		n, err := (*player.pipe).Write(buffer[total:])
+		n, err := player.pipe.Write(buffer[total:])
 		if err != nil {
 			return err
 		}
@@ -112,7 +112,7 @@ func (player *Player) Play(samples interface{}) error {
 // Closes the pipe and stops the ffplay process.
 func (player *Player) Close() {
 	if player.pipe != nil {
-		(*player.pipe).Close()
+		player.pipe.Close()
 	}
 	if player.cmd != nil {
 		player.cmd.Wait()
@@ -127,7 +127,7 @@ func (player *Player) cleanup() {
 	go func() {
 		<-c
 		if player.pipe != nil {
-			(*player.pipe).Close()
+			player.pipe.Close()
 		}
 		if player.cmd != nil {
 			player.cmd.Process.Kill()

@@ -25,7 +25,7 @@ type Audio struct {
 	hasstreams bool              // Flag storing whether file has additional data streams.
 	buffer     []byte            // Raw audio data.
 	metadata   map[string]string // Audio Metadata.
-	pipe       *io.ReadCloser    // Stdout pipe for ffmpeg process.
+	pipe       io.ReadCloser     // Stdout pipe for ffmpeg process.
 	cmd        *exec.Cmd         // ffmpeg command.
 }
 
@@ -249,7 +249,7 @@ func (audio *Audio) init() error {
 	if err != nil {
 		return err
 	}
-	audio.pipe = &pipe
+	audio.pipe = pipe
 
 	if err := cmd.Start(); err != nil {
 		return err
@@ -276,28 +276,24 @@ func (audio *Audio) Read() bool {
 		}
 	}
 
-	total := 0
-	for total < len(audio.buffer) {
-		n, err := (*audio.pipe).Read(audio.buffer[total:])
-		total += n
-		if err == io.EOF {
-			// When the user reaches the end of the audio stream, the buffer will have to be shortened
-			// such that the audio stream is accurately represented.
-			// The rest of this sliced array is not garbage collected.
-			audio.buffer = audio.buffer[:total]
-			audio.Close()
-			break
-		}
+	n, err := io.ReadFull(audio.pipe, audio.buffer)
+
+	if err != nil {
+		// When the user reaches the end of the audio stream, the buffer will have to be shortened
+		// such that the audio stream is accurately represented.
+		// The rest of this sliced array is not garbage collected.
+		audio.buffer = audio.buffer[:n]
+		audio.Close()
 	}
 
-	return total > 0
+	return n > 0
 }
 
 // Closes the pipe and stops the ffmpeg process.
 func (audio *Audio) Close() {
 	audio.ended = true
 	if audio.pipe != nil {
-		(*audio.pipe).Close()
+		audio.pipe.Close()
 	}
 	if audio.cmd != nil {
 		audio.cmd.Wait()
@@ -312,7 +308,7 @@ func (audio *Audio) cleanup() {
 	go func() {
 		<-c
 		if audio.pipe != nil {
-			(*audio.pipe).Close()
+			audio.pipe.Close()
 		}
 		if audio.cmd != nil {
 			audio.cmd.Process.Kill()

@@ -14,14 +14,14 @@ import (
 )
 
 type Microphone struct {
-	name       string         // Microphone device name.
-	samplerate int            // Audio Sample Rate in Hz.
-	channels   int            // Number of audio channels.
-	format     string         // Format of audio samples.
-	bps        int            // Bits per sample.
-	buffer     []byte         // Raw audio data.
-	pipe       *io.ReadCloser // Stdout pipe for ffmpeg process streaming microphone audio.
-	cmd        *exec.Cmd      // ffmpeg command.
+	name       string        // Microphone device name.
+	samplerate int           // Audio Sample Rate in Hz.
+	channels   int           // Number of audio channels.
+	format     string        // Format of audio samples.
+	bps        int           // Bits per sample.
+	buffer     []byte        // Raw audio data.
+	pipe       io.ReadCloser // Stdout pipe for ffmpeg process streaming microphone audio.
+	cmd        *exec.Cmd     // ffmpeg command.
 }
 
 func (mic *Microphone) Name() string {
@@ -221,7 +221,7 @@ func (mic *Microphone) init() error {
 		return err
 	}
 
-	mic.pipe = &pipe
+	mic.pipe = pipe
 	if err := cmd.Start(); err != nil {
 		return err
 	}
@@ -243,11 +243,7 @@ func (mic *Microphone) Read() bool {
 		}
 	}
 
-	total := 0
-	for total < len(mic.buffer) {
-		n, _ := (*mic.pipe).Read(mic.buffer[total:])
-		total += n
-	}
+	io.ReadFull(mic.pipe, mic.buffer)
 
 	return true
 }
@@ -255,7 +251,7 @@ func (mic *Microphone) Read() bool {
 // Closes the pipe and stops the ffmpeg process.
 func (mic *Microphone) Close() {
 	if mic.pipe != nil {
-		(*mic.pipe).Close()
+		mic.pipe.Close()
 	}
 	if mic.cmd != nil {
 		mic.cmd.Process.Kill()
@@ -270,7 +266,7 @@ func (mic *Microphone) cleanup() {
 	go func() {
 		<-c
 		if mic.pipe != nil {
-			(*mic.pipe).Close()
+			mic.pipe.Close()
 		}
 		if mic.cmd != nil {
 			mic.cmd.Process.Kill()
